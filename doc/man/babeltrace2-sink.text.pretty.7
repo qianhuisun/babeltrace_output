@@ -1,0 +1,370 @@
+'\" t
+.\"     Title: babeltrace2-sink.text.pretty
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-SINK\&." "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-sink.text.pretty \- Babeltrace 2\*(Aqs pretty\-printing sink component class
+.SH "DESCRIPTION"
+.sp
+A Babeltrace\ \&2 \fBsink.text.pretty\fR component pretty\-prints the events, discarded events, and discarded packets messages it consumes to the standard output or to a file\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+            | sink\&.text\&.pretty |
+            |                  +\-\-> Pretty\-printed messages to
+Messages \-\->@ in               |    the standard output or a file and
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    to the standard error
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.sp
+By default, a \fBsink.text.pretty\fR component pretty\-prints to the standard output\&. You can use the \fBpath\fR parameter to make the component write to a file instead\&.
+.sp
+The component prints warnings on the standard error stream when it consumes a discarded events or discarded packets message\&.
+.sp
+If you don\(cqt use the \fBpath\fR parameter and the application\(cqs standard output is connected to a color\-capable terminal, the component emits terminal color codes to enhance the text output\&. You can use the \fBcolor\fR parameter to force the color support or to disable it\&.
+.sp
+This component class is equivalent to the \fBtext\fR output format of \fBbabeltrace\fR(1) (Babeltrace\ \&1 command\-line tool)\&.
+.SH "INITIALIZATION PARAMETERS"
+.PP
+\fBclock-cycles\fR=\fByes\fR [optional boolean]
+.RS 4
+Print event times in clock cycles instead of hours, minutes, seconds, and nanoseconds\&.
+.RE
+.PP
+\fBclock-date\fR=\fByes\fR [optional boolean]
+.RS 4
+Print event times
+\fIand\fR
+dates\&.
+.RE
+.PP
+\fBclock-gmt\fR=\fByes\fR [optional boolean]
+.RS 4
+Print event times in the GMT time zone instead of the local time zone\&.
+.RE
+.PP
+\fBclock-seconds\fR=\fByes\fR [optional boolean]
+.RS 4
+Print event times in seconds instead of hours, minutes, seconds, and nanoseconds\&.
+.RE
+.PP
+\fBcolor\fR=(\fBnever\fR | \fBauto\fR | \fBalways\fR) [optional string]
+.RS 4
+Force the terminal color support, one of:
+.PP
+\fBauto\fR (default)
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBnever\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBalways\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.sp
+The
+\fBBABELTRACE_TERM_COLOR\fR
+environment variable overrides this parameter\&.
+.RE
+.PP
+\fBfield-default\fR=(\fBshow\fR | \fBhide\fR) [optional string]
+.RS 4
+By default, show or hide all the fields\&. This sets the default value of all the parameters which start with
+\fBfield-\fR\&.
+.RE
+.PP
+\fBfield-emf\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the event\(cqs Eclipse Modeling Framework URI field\&.
+.RE
+.PP
+\fBfield-loglevel\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the event\(cqs logging level field\&.
+.RE
+.PP
+\fBfield-trace\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the trace name field\&.
+.RE
+.PP
+\fBfield-trace:domain\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the tracing domain field\&.
+.RE
+.PP
+\fBfield-trace:hostname\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the hostname field\&.
+.RE
+.PP
+\fBfield-trace:procname\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the process name field\&.
+.RE
+.PP
+\fBfield-trace:vpid\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the virtual process ID field\&.
+.RE
+.PP
+\fBname-context\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the field names in the context scopes\&.
+.RE
+.PP
+\fBname-default\fR=(\fBshow\fR | \fBhide\fR) [optional string]
+.RS 4
+By default, show or hide all the names\&. This sets the default value of all the parameters which start with
+\fBname-\fR\&.
+.RE
+.PP
+\fBname-header\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the field names in the header scopes\&.
+.RE
+.PP
+\fBname-payload\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the field names in the event payload scopes\&.
+.RE
+.PP
+\fBname-scope\fR=(\fByes\fR | \fBno\fR) [optional boolean]
+.RS 4
+Show or hide the scope names\&.
+.RE
+.PP
+\fBno-delta\fR=\fByes\fR [optional boolean]
+.RS 4
+Do not print the time delta between consecutive lines\&.
+.RE
+.PP
+\fBpath\fR=\fIPATH\fR [optional string]
+.RS 4
+Print the text output to the file
+\fIPATH\fR
+instead of the standard output\&.
+.RE
+.PP
+\fBverbose\fR=\fByes\fR [optional boolean]
+.RS 4
+Turn the verbose mode on\&.
+.RE
+.SH "PORTS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| sink\&.text\&.pretty |
+|                  |
+@ in               |
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SS "Input"
+.PP
+\fBin\fR
+.RS 4
+Single input port\&.
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.PP
+\fBBABELTRACE_EXEC_ON_ABORT\fR=\fICMDLINE\fR
+.RS 4
+Execute the command line
+\fICMDLINE\fR, as parsed like a UNIX\ \&98 shell, when any part of the Babeltrace\ \&2 project unexpectedly aborts\&.
+.sp
+The application only aborts when the executed command returns, ignoring its exit status\&.
+.sp
+This environment variable is ignored when the application has the
+\fBsetuid\fR
+or the
+\fBsetgid\fR
+access right flag set\&.
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR\fR=(\fBAUTO\fR | \fBNEVER\fR | \fBALWAYS\fR)
+.RS 4
+Force the terminal color support for the
+\fBbabeltrace2\fR(1)
+program and the project\(cqs plugins\&.
+.sp
+The available values are:
+.PP
+\fBAUTO\fR
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBNEVER\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBALWAYS\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR_BRIGHT_MEANS_BOLD\fR=\fB0\fR
+.RS 4
+Set to
+\fB0\fR
+to emit
+SGR (see <https://en.wikipedia.org/wiki/ANSI_escape_code>)
+codes 90 to 97 for bright colors instead of bold (SGR code\ \&1) and standard color codes (SGR codes 30 to 37)\&.
+.RE
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This component class is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2-plugin-text\fR(7)

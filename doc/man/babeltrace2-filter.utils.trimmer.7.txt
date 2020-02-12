@@ -1,0 +1,111 @@
+= babeltrace2-filter.utils.trimmer(7)
+:manpagetype: component class
+:revdate: 14 September 2019
+
+
+== NAME
+
+babeltrace2-filter.utils.trimmer - Babeltrace 2's trimmer filter
+component class
+
+
+== DESCRIPTION
+
+A Babeltrace~2 compcls:filter.utils.trimmer message iterator
+discards all the consumed messages with a time less than a given
+beginning time and greater than a given end time. It effectively
+``cuts'', or trims trace streams.
+
+----
+            +-------------------+
+            | flt.utils.trimmer |
+            |                   |
+Messages -->@ in            out @--> Less messages
+            +-------------------+
+----
+
+include::common-see-babeltrace2-intro.txt[]
+
+A compcls:filter.utils.trimmer message iterator makes its upstream
+message iterator seek the configured beginning time (see the param:begin
+parameter) before it starts to consume messages. This seeking operation
+can have an effect on the times of stream beginning, packet beginning,
+discarded events, and discarded packets messages so that they fall
+within the configured trimming time range.
+
+As such, when a compcls:filter.utils.trimmer message iterator consumes a
+message of which the time is greater than the configured end time (see
+the param:end parameter), it can alter the time of stream end, packet
+end, discarded events, and discarded packets messages so that they fall
+within the configured trimming time range.
+
+A compcls:filter.utils.trimmer message iterator requires that all the
+upstream messages it consumes have times, except for stream beginning
+and end messages, returning an error status otherwise.
+
+
+== INITIALIZATION PARAMETERS
+
+param:begin='TIME' vtype:[optional string or signed integer]::
+    Set the trimming time range's beginning time to 'TIME'.
++
+If 'TIME' is a string, see below for its format. If 'TIME' is a signed
+integer, the component converts it to a string and treats it as such.
++
+If you don't specify this parameter, the component discards no events
+until the end of the trimming time range.
++
+The format of 'TIME' when it's a string is one of:
++
+--
+include::common-trimmer-time-format.txt[]
+--
++
+If 'TIME' has no date information, then the message iterator uses the
+first upstream message's time to determine the date.
+
+param:end='TIME' vtype:[optional string or signed integer]::
+    Set the trimming time range's end time to 'TIME'.
++
+If 'TIME' is a string, see the param:begin parameter for its format. If
+'TIME' is a signed integer, the component converts it to a string and
+treats it as such.
++
+If you don't specify this parameter, the component discards no events
+from the beginning of the trimming time range.
+
+param:gmt=`yes` vtype:[optional boolean]::
+    Set the time zone of the param:begin and param:end parameters
+    to GMT instead of the local time zone.
+
+
+== PORTS
+
+----
++-------------------+
+| flt.utils.trimmer |
+|                   |
+@ in            out @
++-------------------+
+----
+
+
+=== Input
+
+`in`::
+    Single input port.
+
+
+=== Output
+
+`out`::
+    Single output port.
+
+
+include::common-footer.txt[]
+
+
+== SEE ALSO
+
+man:babeltrace2-intro(7),
+man:babeltrace2-plugin-utils(7)

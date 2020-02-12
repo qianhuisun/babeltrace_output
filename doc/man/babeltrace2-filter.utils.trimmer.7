@@ -1,0 +1,296 @@
+'\" t
+.\"     Title: babeltrace2-filter.utils.trimmer
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-FILTER\" "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-filter.utils.trimmer \- Babeltrace 2\*(Aqs trimmer filter component class
+.SH "DESCRIPTION"
+.sp
+A Babeltrace\ \&2 \fBfilter.utils.trimmer\fR message iterator discards all the consumed messages with a time less than a given beginning time and greater than a given end time\&. It effectively \(lqcuts\(rq, or trims trace streams\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+            | flt\&.utils\&.trimmer |
+            |                   |
+Messages \-\->@ in            out @\-\-> Less messages
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.sp
+A \fBfilter.utils.trimmer\fR message iterator makes its upstream message iterator seek the configured beginning time (see the \fBbegin\fR parameter) before it starts to consume messages\&. This seeking operation can have an effect on the times of stream beginning, packet beginning, discarded events, and discarded packets messages so that they fall within the configured trimming time range\&.
+.sp
+As such, when a \fBfilter.utils.trimmer\fR message iterator consumes a message of which the time is greater than the configured end time (see the \fBend\fR parameter), it can alter the time of stream end, packet end, discarded events, and discarded packets messages so that they fall within the configured trimming time range\&.
+.sp
+A \fBfilter.utils.trimmer\fR message iterator requires that all the upstream messages it consumes have times, except for stream beginning and end messages, returning an error status otherwise\&.
+.SH "INITIALIZATION PARAMETERS"
+.PP
+\fBbegin\fR=\fITIME\fR [optional string or signed integer]
+.RS 4
+Set the trimming time range\(cqs beginning time to
+\fITIME\fR\&.
+.sp
+If
+\fITIME\fR
+is a string, see below for its format\&. If
+\fITIME\fR
+is a signed integer, the component converts it to a string and treats it as such\&.
+.sp
+If you don\(cqt specify this parameter, the component discards no events until the end of the trimming time range\&.
+.sp
+The format of
+\fITIME\fR
+when it\(cqs a string is one of:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIYYYY\fR\-\fIMM\fR\-\fIDD\fR \fIHH\fR:\fIII\fR[:\fISS\fR[\&.\fINANO\fR]]
+\fIHH\fR:\fIII\fR[:\fISS\fR[\&.\fINANO\fR]]
+[\-]\fISEC\fR[\&.\fINANO\fR]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIYYYY\fR
+.RS 4
+4\-digit year\&.
+.RE
+.PP
+\fIMM\fR
+.RS 4
+2\-digit month (January is
+\fB01\fR)\&.
+.RE
+.PP
+\fIDD\fR
+.RS 4
+2\-digit day\&.
+.RE
+.PP
+\fIHH\fR
+.RS 4
+2\-digit hour (24\-hour format)\&.
+.RE
+.PP
+\fIII\fR
+.RS 4
+2\-digit minute\&.
+.RE
+.PP
+\fISS\fR
+.RS 4
+2\-digit second\&.
+.RE
+.PP
+\fINANO\fR
+.RS 4
+Nanoseconds (up to nine digits)\&.
+.RE
+.PP
+\fISEC\fR
+.RS 4
+Seconds since origin\&.
+.RE
+.sp
+If
+\fITIME\fR
+has no date information, then the message iterator uses the first upstream message\(cqs time to determine the date\&.
+.RE
+.PP
+\fBend\fR=\fITIME\fR [optional string or signed integer]
+.RS 4
+Set the trimming time range\(cqs end time to
+\fITIME\fR\&.
+.sp
+If
+\fITIME\fR
+is a string, see the
+\fBbegin\fR
+parameter for its format\&. If
+\fITIME\fR
+is a signed integer, the component converts it to a string and treats it as such\&.
+.sp
+If you don\(cqt specify this parameter, the component discards no events from the beginning of the trimming time range\&.
+.RE
+.PP
+\fBgmt\fR=\fByes\fR [optional boolean]
+.RS 4
+Set the time zone of the
+\fBbegin\fR
+and
+\fBend\fR
+parameters to GMT instead of the local time zone\&.
+.RE
+.SH "PORTS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| flt\&.utils\&.trimmer |
+|                   |
+@ in            out @
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SS "Input"
+.PP
+\fBin\fR
+.RS 4
+Single input port\&.
+.RE
+.SS "Output"
+.PP
+\fBout\fR
+.RS 4
+Single output port\&.
+.RE
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This component class is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2-plugin-utils\fR(7)

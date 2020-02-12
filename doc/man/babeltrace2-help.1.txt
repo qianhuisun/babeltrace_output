@@ -1,0 +1,98 @@
+= babeltrace2-help(1)
+:manpagetype: command
+:revdate: 14 September 2019
+
+
+== NAME
+
+babeltrace2-help - Get help for a Babeltrace 2 plugin or component class
+
+
+== SYNOPSIS
+
+Get help for a Babeltrace~2 plugin:
+
+[verse]
+*babeltrace2* [<<gen-opts,'GENERAL OPTIONS'>>] *help* 'PLUGIN-NAME'
+
+Get help for a Babeltrace~2 component class:
+
+[verse]
+*babeltrace2* [<<gen-opts,'GENERAL OPTIONS'>>] *help*
+            'COMP-CLS-TYPE'.'PLUGIN-NAME'.'COMP-CLS-NAME'
+
+
+== DESCRIPTION
+
+The `help` command prints the details and help text of either the
+Babeltrace~2 plugin named 'PLUGIN-NAME' or the specific component
+class of type 'COMP-CLS-TYPE' named 'COMP-CLS-NAME' found in the plugin
+named 'PLUGIN-NAME'.
+
+include::common-see-babeltrace2-intro.txt[]
+
+The available values for 'COMP-CLS-TYPE' are:
+
+`source`::
+`src`::
+    Source component class.
+
+`filter`::
+`flt`::
+    Filter component class.
+
+`sink`::
+    Sink component class.
+
+See <<examples,``EXAMPLES''>> for usage examples.
+
+
+== OPTIONS
+
+include::common-gen-options.txt[]
+
+include::common-cmd-info-options.txt[]
+
+
+[[examples]]
+== EXAMPLES
+
+.Get help for a plugin and all its component classes.
+====
+[role="term"]
+----
+$ babeltrace2 help ctf
+----
+====
+
+.Get help for a specific plugin's source component class.
+====
+[role="term"]
+----
+$ babeltrace2 help source.ctf.fs
+----
+====
+
+.Get help for a specific plugin's sink component class.
+====
+[role="term"]
+----
+$ babeltrace2 help sink.text.pretty
+----
+====
+
+
+include::common-cli-env.txt[]
+
+
+include::common-cli-files.txt[]
+
+
+include::common-cmd-footer.txt[]
+
+
+== SEE ALSO
+
+man:babeltrace2-intro(7),
+man:babeltrace2(1),
+man:babeltrace2-list-plugins(1)

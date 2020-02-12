@@ -1,0 +1,226 @@
+= babeltrace2(1)
+:manpagetype: program
+:revdate: 14 September 2019
+
+
+== NAME
+
+babeltrace2 - Convert or process one or more traces, and more
+
+
+== SYNOPSIS
+
+[verse]
+*babeltrace2* [opt:--debug | opt:--verbose | opt:--log-level='LVL']
+            [opt:--omit-home-plugin-path] [opt:--omit-system-plugin-path]
+            [opt:--plugin-path='PATH'[:__PATH__]...] ['<<commands,CMD>>'] ['CMD ARGS']
+
+
+== DESCRIPTION
+
+`babeltrace2` is an open-source trace converter and processor
+command-line program. The tool can open one or more traces and convert
+between multiple formats, possibly with one or more filters in the
+conversion path, and perform other operations depending on the
+command 'CMD' (see <<commands,``COMMANDS''>>).
+
+[NOTE]
+--
+You might be looking for the man:babeltrace2-convert(1) command's
+manual page; the `convert` command is the default command of
+`babeltrace2` and is backward compatible with man:babeltrace(1).
+
+See <<examples,``EXAMPLES''>> for `convert` command examples.
+--
+
+include::common-see-babeltrace2-intro.txt[]
+
+Most of the `babeltrace2` commands load Babeltrace~2 plugins to
+perform their operation. The search path for Babeltrace~2 plugins
+is, in this order:
+
+. The colon-separated (or semicolon, on Windows) list of directories in
+  the `BABELTRACE_PLUGIN_PATH` environment variable.
+
+. The colon-separated (or semicolon, on Windows) list of directories in
+  the opt:--plugin-path option.
+
+. `$HOME/.local/lib/babeltrace2/plugins`
+
+. +{system_plugin_path}+
+
+You can use the man:babeltrace2-list-plugins(1) command to dynamically
+list the available plugins and what they offer. See
+<<plugins,``PROJECT'S PLUGINS''>> for a list of plugins shipped with
+Babeltrace~2.
+
+
+== OPTIONS
+
+opt:-d::
+opt:--debug::
+    Legacy option: this is equivalent to opt:--log-level=`TRACE`.
+
+opt:-l 'LVL'::
+opt:--log-level='LVL'::
+    Set the log level of all known Babeltrace~2 loggers to 'LVL',
+    including individual components for the man:babeltrace2-convert(1)
+    and man:babeltrace2-run(1) commands.
++
+You can override the log level of a specific component with the
+nlopt:--log-level option of the man:babeltrace2-convert(1) or
+man:babeltrace2-run(1) commands.
++
+You can override the log level of the library with the
+`LIBBABELTRACE2_INIT_LOG_LEVEL` environment variable.
++
+You can override the log level of the CLI with the
+`BABELTRACE_CLI_LOG_LEVEL` environment variable.
++
+You can override the log level of the Babeltrace~2 Python bindings
+with the `BABELTRACE_PYTHON_BT2_LOG_LEVEL` environment variable.
++
+The available values for 'LVL' are:
++
+--
+include::common-log-levels.txt[]
+--
+
+opt:--omit-home-plugin-path::
+    Do not search for plugins in `$HOME/.local/lib/babeltrace2/plugins`.
+
+opt:--omit-system-plugin-path::
+    Do not search for plugins in +{system_plugin_path}+.
+
+opt:--plugin-path='PATH'[:__PATH__]...::
+    Add 'PATH' to the list of paths in which plugins can be found.
+
+opt:-v::
+opt:--verbose::
+    Legacy option: this is equivalent to opt:--log-level=`INFO`.
++
+If 'CMD' is `convert` or is missing, then this also sets the
+manparam:sink.text.pretty:verbose parameter of the implicit
+compcls:sink.text.pretty component (see
+man:babeltrace2-sink.text.pretty(7)) to true.
+
+
+opt:-h::
+opt:--help::
+    Show help and quit.
+
+opt:-V::
+opt:--version::
+    Show version and quit.
+
+
+[[commands]]
+== COMMANDS
+
+The following commands also have their own nlopt:--help option.
+
+`convert`::
+    Convert one or more traces to a given format, possibly with filters
+    in the conversion path.
++
+This is the default command: you don't need to explicitly specify this
+command's name to use it.
++
+This command is backward compatible with the man:babeltrace(1) program.
++
+See man:babeltrace2-convert(1).
+
+`help`::
+    Get help for a specific plugin or plugin's component class.
++
+See man:babeltrace2-help(1).
+
+`list-plugins`::
+    List the available Babeltrace~2 plugins and their component
+    classes.
++
+See man:babeltrace2-list-plugins(1).
+
+`query`::
+    Query an object from a component class.
++
+See man:babeltrace2-query(1).
+
+`run`::
+    Build a trace processing graph and run it.
++
+See man:babeltrace2-run(1).
+
+
+[[plugins]]
+== PROJECT'S PLUGINS
+
+The following plugins are provided by the Babeltrace~2 project
+itself.
+
+man:babeltrace2-plugin-ctf(7)::
+    CTF trace input (from the file system and from the LTTng-live
+    protocol) and output to the file system.
++
+Component classes:
++
+* man:babeltrace2-source.ctf.fs(7)
+* man:babeltrace2-source.ctf.lttng-live(7)
+* man:babeltrace2-sink.ctf.fs(7)
+
+ifeval::[{enable_debug_info} == 1]
+man:babeltrace2-plugin-lttng-utils(7)::
+    Processing graph utilities for LTTng traces.
++
+Component class:
++
+* man:babeltrace2-filter.lttng-utils.debug-info(7)
+endif::[]
+
+man:babeltrace2-plugin-text(7)::
+    Plain text input and output.
++
+Component classes:
++
+* man:babeltrace2-source.text.dmesg(7)
+* man:babeltrace2-sink.text.details(7)
+* man:babeltrace2-sink.text.pretty(7)
+
+man:babeltrace2-plugin-utils(7)::
+    Processing graph utilities.
++
+Component classes:
++
+* man:babeltrace2-filter.utils.muxer(7)
+* man:babeltrace2-filter.utils.trimmer(7)
+* man:babeltrace2-sink.utils.counter(7)
+* man:babeltrace2-sink.utils.dummy(7)
+
+
+[[examples]]
+== EXAMPLES
+
+The following examples are the same as the man:babeltrace2-convert(1)
+manual page's examples because `convert` is the default `babeltrace2`
+program's command.
+
+include::common-convert-examples.txt[]
+
+
+include::common-cli-env.txt[]
+
+
+include::common-cli-files.txt[]
+
+
+include::common-cmd-footer.txt[]
+
+
+== SEE ALSO
+
+man:babeltrace2-intro(7),
+man:babeltrace2-convert(1),
+man:babeltrace2-help(1),
+man:babeltrace2-list-plugins(1),
+man:babeltrace2-query(1),
+man:babeltrace2-run(1)

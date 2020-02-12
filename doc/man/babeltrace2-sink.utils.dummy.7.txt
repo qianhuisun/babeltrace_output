@@ -1,0 +1,57 @@
+= babeltrace2-sink.utils.dummy(7)
+:manpagetype: component class
+:revdate: 14 September 2019
+
+
+== NAME
+
+babeltrace2-sink.utils.dummy - Babeltrace 2's dummy sink component class
+
+
+== DESCRIPTION
+
+A Babeltrace~2 compcls:sink.utils.dummy component consumes messages
+and discards them (does absolutely nothing with them).
+
+----
+            +------------------+
+            | sink.utils.dummy |
+            |                  |
+Messages -->@ in               |
+            +------------------+
+----
+
+include::common-see-babeltrace2-intro.txt[]
+
+A compcls:sink.utils.dummy sink component can be useful to run a trace
+processing graph with no sink side effect, for example to perform
+benchmarks. Prefer a compcls:sink.utils.dummy component class for such
+tasks to, for example, a compcls:sink.text.pretty component and sending
+its output to `/dev/null`, as a compcls:sink.text.pretty component still
+performs formatting operations.
+
+
+== PORTS
+
+----
++------------------+
+| sink.utils.dummy |
+|                  |
+@ in               |
++------------------+
+----
+
+
+=== Input
+
+`in`::
+    Single input port.
+
+
+include::common-footer.txt[]
+
+
+== SEE ALSO
+
+man:babeltrace2-intro(7),
+man:babeltrace2-plugin-utils(7)

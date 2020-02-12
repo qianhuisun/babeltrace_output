@@ -1,0 +1,49 @@
+#!/bin/bash
+#
+# Copyright (C) 2013 Christian Babeux <christian.babeux@efficios.com>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License, version 2 only, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+SH_TAP=1
+
+if [ "x${BT_TESTS_SRCDIR:-}" != "x" ]; then
+	UTILSSH="$BT_TESTS_SRCDIR/utils/utils.sh"
+else
+	UTILSSH="$(dirname "$0")/../utils/utils.sh"
+fi
+
+# shellcheck source=../utils/utils.sh
+source "$UTILSSH"
+
+SUCCESS_TRACES=("${BT_CTF_TRACES_PATH}/succeed/"*)
+FAIL_TRACES=("${BT_CTF_TRACES_PATH}/fail/"*)
+
+NUM_TESTS=$((${#SUCCESS_TRACES[@]} + ${#FAIL_TRACES[@]}))
+
+plan_tests $NUM_TESTS
+
+for path in "${SUCCESS_TRACES[@]}"; do
+	trace=$(basename "${path}")
+	"${BT_TESTS_BT2_BIN}" "${path}" > /dev/null 2>&1
+	ok $? "Run babeltrace2 with trace ${trace}"
+done
+
+for path in "${FAIL_TRACES[@]}"; do
+	trace=$(basename "${path}")
+	if "${BT_TESTS_BT2_BIN}" "${path}" > /dev/null 2>&1; then
+		fail "Run babeltrace2 with invalid trace ${trace}"
+	else
+		pass "Run babeltrace2 with invalid trace ${trace}"
+	fi
+done

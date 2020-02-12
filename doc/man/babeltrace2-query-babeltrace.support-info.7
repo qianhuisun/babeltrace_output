@@ -1,0 +1,300 @@
+'\" t
+.\"     Title: babeltrace2-query-babeltrace.support-info
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-QUERY\-" "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-query-babeltrace.support-info \- Babeltrace 2\*(Aqs support info query object
+.SH "DESCRIPTION"
+.sp
+The \fBbabeltrace.support-info\fR Babeltrace\ \&2 query object indicates, for a given source component class, whether or not its instance can handle a given input, and if so, what\(cqs the confidence of this support\&.
+.sp
+Said input can be a simple string, an existing file path, or an existing directory path\&. Components which expect some form of URI can handle a string input, while components which expect an existing file or directory can handle a file/directory path input\&.
+.sp
+When the source component class\(cqs query method replies that its component can handle a given input, it can also specify the name of a group in which to put that input\&. All the inputs of a given group, for a given component class, should be passed when instantiating the component class as its \fBinputs\fR initialization parameter (array of strings)\&.
+.sp
+The \fBbabeltrace2-convert\fR(1) command queries this object from specific source component classes to find the most appropriate for a given non\-option argument\&.
+.SH "PARAMETERS"
+.PP
+\fBinput\fR=\fIINPUT\fR [string]
+.RS 4
+Check input
+\fIINPUT\fR\&.
+.sp
+Depending on the
+\fBtype\fR
+parameter, this is a simple string, a file path, or a directory path\&.
+.RE
+.PP
+\fBtype\fR=(\fBstring\fR | \fBfile\fR | \fBdirectory\fR) [string]
+.RS 4
+Input type, one of:
+.PP
+\fBstring\fR
+.RS 4
+\fBinput\fR
+parameter is a simple string\&.
+.RE
+.PP
+\fBfile\fR
+.RS 4
+\fBinput\fR
+parameter is a file path\&.
+.RE
+.PP
+\fBdirectory\fR
+.RS 4
+\fBinput\fR
+parameter is a directory path\&.
+.sp
+It is expected that the query method does not recurse into this directory: the result object indicates whether or not the component class supports this specific directory (\fBinput\fR)\&.
+.RE
+.RE
+.SH "RESULT OBJECT"
+.sp
+The result object can be one of:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A simple real value which is the weight, between 0 and 1, of the support by the component class for the given input\&.
+.sp
+A weight of 0 means the input is unsupported while a weight of 1 means it\(cqs fully supported\&. Any value in between shows how confident the component class is about the support of the given input\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A map with a weight and an optional group name\&.
+.RE
+.sp
+When it\(cqs a map, the expected entries are:
+.PP
+\fBgroup\fR=\fIGROUP\-NAME\fR [optional string]
+.RS 4
+Put the given input into a group named
+\fIGROUP\-NAME\fR
+for this component class\&.
+.sp
+If this entry is missing, then the given input gets its own, unique group\&.
+.RE
+.PP
+\fBweight\fR=\fIWEIGHT\fR [real]
+.RS 4
+Weight, between 0 and 1, of the support by the component class for the given input\&.
+.sp
+The semantics are the same as when the result object is a
+simple real value\&.
+.RE
+.SH "EXAMPLES"
+.SS "Query parameters"
+.PP
+\fBExample\ \&1.\ \&String input\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+input: net://relayd177/host/node23/active
+type: string
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&2.\ \&File path input\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+input: /home/user/traces/2019\-08\-26/quad\&.tr
+type: file
+.fi
+.if n \{\
+.RE
+.\}
+.SS "Result object"
+.PP
+\fBExample\ \&3.\ \&Simple weight (unique group)\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+0\&.5
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&4.\ \&Weight and specific group\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+group: 63a4b7e5\-37f0\-4254\-a048\-a0cff9e5b761
+weight: 0\&.75
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&5.\ \&Weight within a map (unique group)\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+weight: 0\&.6
+.fi
+.if n \{\
+.RE
+.\}
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This query object is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2-query\fR(1), \fBbabeltrace2-convert\fR(1)

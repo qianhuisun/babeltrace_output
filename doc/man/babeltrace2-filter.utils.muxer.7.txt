@@ -1,0 +1,82 @@
+= babeltrace2-filter.utils.muxer(7)
+:manpagetype: component class
+:revdate: 14 September 2019
+
+
+== NAME
+
+babeltrace2-filter.utils.muxer - Babeltrace 2's message muxer filter
+component class
+
+
+== DESCRIPTION
+
+A Babeltrace~2 compcls:filter.utils.muxer message iterator muxes
+the messages that it consumes from one or more upstream message
+iterators into a linear sequence of messages ordered by time.
+
+----
+            +-----------------+
+            | flt.utils.muxer |
+            |                 |
+Messages -->@ in0         out @--> Sorted messages
+Messages -->@ in1             |
+Messages -->@ in2             |
+            @ in3             |
+            +-----------------+
+----
+
+include::common-see-babeltrace2-intro.txt[]
+
+A compcls:filter.utils.muxer message iterator does not alter the
+messages it consumes: it only sorts them.
+
+The message iterator creates one upstream message iterator per connected
+input port.
+
+NOTE: To support muxing messages with different default clock classes,
+the message iterator converts the message times to nanoseconds from the
+common origin (Unix epoch, for example). This means that the resulting
+message sequence could be incorrect if one or more clock classes have a
+frequency which is greater than 1~GHz.
+
+
+== PORTS
+
+----
++-----------------+
+| flt.utils.muxer |
+|                 |
+@ in0         out @
+@ ...             |
++-----------------+
+----
+
+
+=== Input
+
+`inN`, where `N` is a decimal integer starting at 0::
+    Input port on which a compcls:filter.utils.muxer message iterator
+    creates an upstream message iterator to consumes messages from.
++
+When the component is initialized, its only input port is
+`in0`. When you connect the `in0` port, the component creates
+the `in1` input port, and so on.
++
+In other words, a compcls:filter.utils.muxer component always has an
+available input port.
+
+
+=== Output
+
+`out`::
+    Single output port.
+
+
+include::common-footer.txt[]
+
+
+== SEE ALSO
+
+man:babeltrace2-intro(7),
+man:babeltrace2-plugin-utils(7)

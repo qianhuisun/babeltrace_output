@@ -1,0 +1,159 @@
+= babeltrace2-sink.text.pretty(7)
+:manpagetype: component class
+:revdate: 14 September 2019
+
+
+== NAME
+
+babeltrace2-sink.text.pretty - Babeltrace 2's pretty-printing sink
+component class
+
+
+== DESCRIPTION
+
+A Babeltrace~2 compcls:sink.text.pretty component pretty-prints the
+events, discarded events, and discarded packets messages it consumes to
+the standard output or to a file.
+
+----
+            +------------------+
+            | sink.text.pretty |
+            |                  +--> Pretty-printed messages to
+Messages -->@ in               |    the standard output or a file and
+            +------------------+    to the standard error
+----
+
+include::common-see-babeltrace2-intro.txt[]
+
+By default, a compcls:sink.text.pretty component pretty-prints to the
+standard output. You can use the param:path parameter to make the
+component write to a file instead.
+
+The component prints warnings on the standard error stream when it
+consumes a discarded events or discarded packets message.
+
+If you don't use the param:path parameter and the application's standard
+output is connected to a color-capable terminal, the component emits
+terminal color codes to enhance the text output. You can use the
+param:color parameter to force the color support or to disable it.
+
+This component class is equivalent to the `text` output format of
+man:babeltrace(1) (Babeltrace~1 command-line tool).
+
+
+== INITIALIZATION PARAMETERS
+
+param:clock-cycles=`yes` vtype:[optional boolean]::
+    Print event times in clock cycles instead of hours, minutes,
+    seconds, and nanoseconds.
+
+param:clock-date=`yes` vtype:[optional boolean]::
+    Print event times _and_ dates.
+
+param:clock-gmt=`yes` vtype:[optional boolean]::
+    Print event times in the GMT time zone instead of the local time
+    zone.
+
+param:clock-seconds=`yes` vtype:[optional boolean]::
+    Print event times in seconds instead of hours, minutes,
+    seconds, and nanoseconds.
+
+param:color=(`never` | `auto` | `always`) vtype:[optional string]::
+    Force the terminal color support, one of:
++
+--
+`auto` (default)::
+    Only emit terminal color codes when the standard output and error
+    streams are connected to a color-capable terminal.
+
+`never`::
+    Never emit terminal color codes.
+
+`always`::
+    Always emit terminal color codes.
+--
++
+The `BABELTRACE_TERM_COLOR` environment variable overrides this
+parameter.
+
+param:field-default=(`show` | `hide`) vtype:[optional string]::
+    By default, show or hide all the fields. This sets the default value
+    of all the parameters which start with `field-`.
+
+param:field-emf=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the event's Eclipse Modeling Framework URI field.
+
+param:field-loglevel=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the event's logging level field.
+
+param:field-trace=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the trace name field.
+
+param:field-trace:domain=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the tracing domain field.
+
+param:field-trace:hostname=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the hostname field.
+
+param:field-trace:procname=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the process name field.
+
+param:field-trace:vpid=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the virtual process ID field.
+
+param:name-context=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the field names in the context scopes.
+
+param:name-default=(`show` | `hide`) vtype:[optional string]::
+    By default, show or hide all the names. This sets the
+    default value of all the parameters which start with `name-`.
+
+param:name-header=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the field names in the header scopes.
+
+param:name-payload=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the field names in the event payload scopes.
+
+param:name-scope=(`yes` | `no`) vtype:[optional boolean]::
+    Show or hide the scope names.
+
+param:no-delta=`yes` vtype:[optional boolean]::
+    Do not print the time delta between consecutive lines.
+
+param:path='PATH' vtype:[optional string]::
+    Print the text output to the file 'PATH' instead of the standard
+    output.
+
+param:verbose=`yes` vtype:[optional boolean]::
+    Turn the verbose mode on.
+
+
+== PORTS
+
+----
++------------------+
+| sink.text.pretty |
+|                  |
+@ in               |
++------------------+
+----
+
+
+=== Input
+
+`in`::
+    Single input port.
+
+
+== ENVIRONMENT VARIABLES
+
+include::common-common-env.txt[]
+
+
+include::common-footer.txt[]
+
+
+== SEE ALSO
+
+man:babeltrace2-intro(7),
+man:babeltrace2-plugin-text(7)

@@ -1,0 +1,2402 @@
+'\" t
+.\"     Title: babeltrace2-convert
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-CONVERT" "1" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-convert \- Convert one or more traces to a given format
+.SH "SYNOPSIS"
+.sp
+Pretty\-print (plain text) the events, in order, of one or more traces:
+.sp
+.nf
+\fBbabeltrace2\fR [\fIGENERAL OPTIONS\fR] [\fBconvert\fR] [\fB--retry-duration\fR=\fITIME\-US\fR]
+            \fITRACE\-PATH\fR\&...
+.fi
+.sp
+Convert one or more traces to a given format:
+.sp
+.nf
+\fBbabeltrace2\fR [\fIGENERAL OPTIONS\fR] [\fBconvert\fR] [\fB--retry-duration\fR=\fITIME\-US\fR]
+            \fICONVERSION ARGS\fR
+.fi
+.sp
+Get the equivalent \fBbabeltrace2-run\fR(1) command arguments to convert one or more traces to a given format:
+.sp
+.nf
+\fBbabeltrace2\fR [\fIGENERAL OPTIONS\fR] [\fBconvert\fR] [\fB--retry-duration\fR=\fITIME\-US\fR]
+            (\fB--run-args\fR | \fB--run-args-0\fR) \fICONVERSION ARGS\fR
+.fi
+.sp
+Print the metadata text of a CTF trace:
+.sp
+.nf
+\fBbabeltrace2\fR [\fIGENERAL OPTIONS\fR] [\fBconvert\fR] [\fB--output\fR=\fIOUTPATH\fR]
+            \fB--output-format\fR=\fBctf-metadata\fR \fITRACE\-PATH\fR
+.fi
+.sp
+Print the available remote LTTng tracing sessions (see <https://lttng.org/docs/#doc-lttng-live>):
+.sp
+.nf
+\fBbabeltrace2\fR [\fIGENERAL OPTIONS\fR] [\fBconvert\fR] [\fB--output\fR=\fIOUTPATH\fR]
+            \fB--input-format\fR=\fBlttng-live\fR \fIURL\fR
+.fi
+.SH "DESCRIPTION"
+.sp
+The \fBconvert\fR command converts one or more traces to a given format, possibly with filters in the conversion path\&.
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.sp
+\fBconvert\fR is the default \fBbabeltrace2\fR(1) command: you generally don\(cqt need to specify its name\&. The following commands are equivalent if the \fB...\fR part does not start with another \fBbabeltrace2\fR(1) command\(cqs name, like \fBrun\fR or \fBlist-plugins\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 convert \&.\&.\&.
+$ babeltrace2 \&.\&.\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If you need to make sure that you are executing the \fBconvert\fR command, use \fBbabeltrace2 convert\fR explicitly\&.
+.sp .5v
+.RE
+.sp
+More specifically, the \fBconvert\fR command creates a conversion graph\&.
+.sp
+A conversion graph is a specialized trace processing graph focused on the conversion of one or more traces to another format, possibly filtering or modifying their events and other messages in the process\&. A conversion graph is a linear chain of components once the source streams are merged:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-+
+| source 1 @\-\&.
++\-\-\-\-\-\-\-\-\-\-+ |
+             |  +\-\-\-\-\-\-\-+
++\-\-\-\-\-\-\-\-\-\-+ \*(Aq\->@       |    +\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-+
+| source 2 @\-\-\->@ muxer @\-\-\->@ trimmer @\-\-\->@ debug\-info @\-\&.
++\-\-\-\-\-\-\-\-\-\-+ \&.\->@       |    +\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-+ |
+             |  +\-\-\-\-\-\-\-+                                  |
++\-\-\-\-\-\-\-\-\-\-+ |    \&.\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\*(Aq
+|   \&.\&.\&.    @\-\*(Aq    |  +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-+
++\-\-\-\-\-\-\-\-\-\-+      \*(Aq\->@ other filters |\-\-\->@ sink |
+                     +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Note that the trimmer, debugging information, and other filters are optional\&. See \(lqCreate implicit components from options\(rq to learn how to enable them\&.
+.sp
+If you need another trace processing graph layout, use the more flexible \fBbabeltrace2-run\fR(1) command\&.
+.sp
+Like with the \fBbabeltrace2-run\fR(1) command, you can create components explicitly with the \fB--component\fR option (see \(lqCreate explicit components\(rq)\&. You can also use one of the many specific \fBconvert\fR command options (see \(lqCreate implicit components from options\(rq) and non\-option arguments (see \(lqCreate implicit components from non\-option arguments\(rq) to create implicit components\&.
+.sp
+An \fIimplicit component\fR is a component which is created and added to the conversion graph without an explicit instantiation through the \fB--component\fR option\&. An implicit component is easier to create than an explicit component: this is why the \fBconvert\fR command exists, as you can also create and run a conversion graph with the generic \fBbabeltrace2-run\fR(1) command\&.
+.sp
+For example, you can specify one or more CTF trace path as non\-option arguments to pretty\-print the merged events to the standard output:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace /path/to/other/trace
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+This is the equivalent of creating and connecting together:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+One
+\fBsource.ctf.fs\fR
+components with its
+\fBinputs\fR
+initialization parameter set to
+\fB/path/to/trace\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+One
+\fBsource.ctf.fs\fR
+components with its
+\fBinputs\fR
+initialization parameter set to
+\fB/path/to/other/trace\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A
+\fBfilter.utils.muxer\fR
+component\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A
+\fBsink.text.pretty\fR
+component\&.
+.RE
+.sp
+This creates the following conversion graph:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| src\&.ctf\&.fs |    | flt\&.utils\&.muxer |    | sink\&.text\&.pretty |
+|  [ctf\-fs]  |    |     [muxer]     |    |     [pretty]     |
+|            |    |                 |    |                  |
+|    stream0 @\-\-\->@ in0         out @\-\-\->@ in               |
+|    stream1 @\-\-\->@ in1             |    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+|    stream2 @\-\-\->@ in2             |
+|    stream3 @\-\-\->@ in3             |
++\-\-\-\-\-\-\-\-\-\-\-\-+    |                 |
+                  |                 |
++\-\-\-\-\-\-\-\-\-\-\-\-+    |                 |
+| src\&.ctf\&.fs |    |                 |
+| [ctf\-fs\-2] |    |                 |
+|            |    |                 |
+|    stream0 @\-\-\->@ in4             |
+|    stream1 @\-\-\->@ in5             |
++\-\-\-\-\-\-\-\-\-\-\-\-+    @ in6             |
+                  +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+It is equivalent to the following \fBbabeltrace2-run\fR(1) command line:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 run \-\-component=ctf\-fs:src\&.ctf\&.fs \e
+                  \-\-params=\*(Aqinputs=["/path/to/trace"] \e
+                  \-\-component=ctf\-fs\-2:src\&.ctf\&.fs \e
+                  \-\-params=\*(Aqinputs=["/path/to/other/trace"] \e
+                  \-\-component=muxer:filter\&.utils\&.muxer \e
+                  \-\-component=pretty:sink\&.text\&.pretty \e
+                  \-\-connect=ctf*:muxer \-\-connect=muxer:pretty
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+You can use the \fB--run-args\fR option to make the \fBconvert\fR command print its equivalent \fBrun\fR command arguments instead of creating and running the conversion graph\&. The printed arguments are escaped for shells, which means you can use them as is on the command line and possibly add more options to the \fBrun\fR command:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 run $(babeltrace2 \-\-run\-args /path/to/trace) \&.\&.\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The \fB--run-args-0\fR option is like the \fB--run-args\fR option, but the printed arguments are NOT escaped and they are separated by a null character instead of a space\&. This is useful if the resulting arguments are not the direct input of a shell, for example if passed to \fBxargs -0\fR\&.
+.sp
+See \(lqEXAMPLES\(rq for usage examples\&.
+.SS "Create explicit components"
+.sp
+To explicitly create a component, use the \fB--component\fR option\&. This option specifies:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBOptional\fR: The name of the component\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The type of the component class to instantiate: source, filter, or sink\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The name of the plugin in which to find the component class to instantiate\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The name of the component class to instantiate\&.
+.RE
+.sp
+You can use the \fB--component\fR option multiple times to create multiple components\&. You can instantiate the same component class multiple times as different component instances\&.
+.sp
+Immediately following a \fB--component\fR option on the command line, the created component is known as the \fIcurrent component\fR (until the next \fB--component\fR option or non\-option argument)\&.
+.sp
+The following command\-line options apply to the current component:
+.PP
+\fB--log-level\fR=\fILVL\fR
+.RS 4
+Set the log level of the current component to
+\fILVL\fR\&.
+.RE
+.PP
+\fB--params\fR=\fIPARAMS\fR
+.RS 4
+Add
+\fIPARAMS\fR
+to the initialization parameters of the current component\&.
+.sp
+If
+\fIPARAMS\fR
+contains a key which exists in the current component\(cqs initialization parameters, replace the parameter\&.
+.RE
+.sp
+See \(lqEXAMPLES\(rq for usage examples\&.
+.SS "Create implicit components from non\-option arguments"
+.sp
+When you specify a non\-option argument to the \fBconvert\fR command, it tries to find one or more components which can handle this argument\&.
+.sp
+For example, with this command line:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+If \fB/path/to/trace\fR is a CTF trace directory, then the \fBconvert\fR command creates a \fBsource.ctf.fs\fR component to handle this specific trace\&.
+.sp
+This automatic source component discovery mechanism is possible thanks to component classes which support the \fBbabeltrace.support-info\fR query object (see \fBbabeltrace2-query-babeltrace.support-info\fR(7))\&.
+.sp
+The non\-option argument can be a directory\&. If no component can handle that specific directory, then the \fBconvert\fR command traverses that directory and recursively tries to find compatible components for each file and subdirectory\&. This means that a single non\-option argument can lead to the creation of many implicit components\&.
+.sp
+The following command\-line options apply to ALL the implicit components created from the last non\-option argument:
+.PP
+\fB--log-level\fR=\fILVL\fR
+.RS 4
+Set the log level of those implicit components to
+\fILVL\fR\&.
+.RE
+.PP
+\fB--params\fR=\fIPARAMS\fR
+.RS 4
+Add
+\fIPARAMS\fR
+to the initialization parameters of those implicit components\&.
+.sp
+For a given implicit component, if
+\fIPARAMS\fR
+contains a key which exists in this component\(cqs initialization parameters, replace the parameter\&.
+.RE
+.sp
+Note that it\(cqs also possible for two non\-option arguments to cause the creation of a single implicit component\&. For example, if you specify:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/chunk1 /path/to/chunk2
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+where \fB/path/to/chunk1\fR and \fB/path/to/chunk2\fR are paths to chunks of the same logical CTF trace, then the \fBconvert\fR command creates a single \fBsource.ctf.fs\fR component which receives both paths at initialization time\&. When this happens, any \fB--log-level\fR or \fB--params\fR option that you specify to one of them applies to the single implicit component\&. For example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/chunk1 \-\-params=clock\-class\-offset\-s=450 \e
+              /path/to/chunk2 \-\-params=clock\-class\-offset\-ns=98 \e
+              \-\-log\-level=INFO
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Here, the single implicit component gets both \fBclock-class-offset-s\fR and \fBclock-class-offset-ns\fR initialization parameters, as well as the INFO log level\&.
+.sp
+For backward compatibility with the \fBbabeltrace\fR(1) program, the \fBconvert\fR command ignores any non\-option argument which does not cause the creation of any component\&. In that case, it emits a warning log statement and continues\&.
+.SS "Create implicit components from options"
+.sp
+There are many ways to create implicit components from options with the \fBconvert\fR command:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+To create an implicit
+\fBfilter.utils.trimmer\fR
+component (stream trimmer), specify the
+\fB--begin\fR,
+\fB--end\fR, or
+\fB--timerange\fR
+option\&.
+.sp
+Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-begin=22:14:38 \-\-end=22:15:07
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-timerange=22:14:38,22:15:07
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-end=12:31:04\&.882928015
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+To create an implicit
+\fBfilter.lttng-utils.debug-info\fR
+(add debugging information to compatible LTTng events), specify any of the
+\fB--debug-info\fR,
+\fB--debug-info-dir\fR,
+\fB--debug-info-full-path\fR, or
+\fB--debug-info-target-prefix\fR
+options\&.
+.sp
+Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-debug\-info
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \e
+              \-\-debug\-info\-target\-prefix=/tmp/tgt\-root
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-debug\-info\-full\-path
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+To create an implicit
+\fBsink.text.pretty\fR
+component (pretty\-printing text output to the standard output or to a file), specify no other sink components, explicit or implicit\&.
+.sp
+The implicit
+\fBsink.text.pretty\fR
+component exists by default\&. If any other explicit or implicit sink component exists, the
+\fBconvert\fR
+command does not automatically create the implicit
+\fBsink.text.pretty\fR
+component\&.
+.sp
+The
+\fB--clock-cycles\fR,
+\fB--clock-date\fR,
+\fB--clock-gmt\fR,
+\fB--clock-seconds\fR,
+\fB--color\fR,
+\fB--fields\fR,
+\fB--names\fR, and
+\fB--no-delta\fR
+options all apply to the implicit
+\fBsink.text.pretty\fR
+component\&.
+.sp
+The
+\fB--output\fR
+option without
+\fB--output-format\fR=\fBctf\fR
+makes the implicit
+\fBsink.text.pretty\fR
+component write its content to a file, except the warnings for backward compatibility with the
+\fBbabeltrace\fR(1)
+program\&.
+.sp
+Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-no\-delta
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-output=/tmp/pretty\-out
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+To create an implicit
+\fBsink.utils.dummy\fR
+component (no output), specify the
+\fB--output-format\fR=\fBdummy\fR
+option\&.
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/trace \-\-output\-format=dummy
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+To create an implicit
+\fBsink.ctf.fs\fR
+component (CTF traces written to the file system), specify the
+\fB--output-format\fR=\fBctf\fR
+and the
+\fB--output\fR=\fIDIR\fR
+(base output directory) options\&.
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/input/trace \-\-output\-format=ctf \e
+              \-\-output=my\-traces
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+You can combine multiple methods to create multiple implicit components\&. For example, you can trim an LTTng (CTF) trace, add debugging information to it, and write it as another CTF trace:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/input/trace \-\-timerange=22:14:38,22:15:07 \e
+              \-\-debug\-info \-\-output\-format=ctf \-\-output=out\-dir
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The equivalent \fBbabeltrace2-run\fR(1) command of this \fBconvert\fR command is:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 run \-\-component=auto\-disc\-source\-ctf\-fs:source\&.ctf\&.fs \e
+                  \-\-params=\*(Aqinputs=["/path/to/input/trace"]\*(Aq \e
+                  \-\-component=sink\-ctf\-fs:sink\&.ctf\&.fs \e
+                  \-\-params=\*(Aqpath="out\-dir"\*(Aq \e
+                  \-\-component=muxer:filter\&.utils\&.muxer \e
+                  \-\-component=trimmer:filter\&.utils\&.trimmer \e
+                  \-\-params=\*(Aqbegin="22:14:38"\*(Aq \e
+                  \-\-params=\*(Aqend="22:15:07"\*(Aq \e
+                  \-\-component=debug\-info:filter\&.lttng\-utils\&.debug\-info \e
+                  \-\-connect=auto\-disc\-source\-ctf\-fs:muxer \e
+                  \-\-connect=muxer:trimmer \e
+                  \-\-connect=trimmer:debug\-info \e
+                  \-\-connect=debug\-info:sink\-ctf\-fs
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The order of the implicit component options documented in this subsection is not significant\&.
+.sp
+See \(lqEXAMPLES\(rq for more examples\&.
+.SH "OPTIONS"
+.SS "General"
+.sp
+You can use those options before the command name\&.
+.sp
+See \fBbabeltrace2\fR(1) for more details\&.
+.PP
+\fB-d\fR, \fB--debug\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBTRACE\fR\&.
+.RE
+.PP
+\fB-l\fR \fILVL\fR, \fB--log-level\fR=\fILVL\fR
+.RS 4
+Set the log level of all known Babeltrace\ \&2 loggers to
+\fILVL\fR\&.
+.RE
+.PP
+\fB--omit-home-plugin-path\fR
+.RS 4
+Do not search for plugins in
+\fB$HOME/.local/lib/babeltrace2/plugins\fR\&.
+.RE
+.PP
+\fB--omit-system-plugin-path\fR
+.RS 4
+Do not search for plugins in
+\fB/usr/local/lib/babeltrace2/plugins\fR\&.
+.RE
+.PP
+\fB--plugin-path\fR=\fIPATH\fR[:\fIPATH\fR]\&...
+.RS 4
+Add
+\fIPATH\fR
+to the list of paths in which plugins can be found\&.
+.RE
+.PP
+\fB-v\fR, \fB--verbose\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBINFO\fR\&.
+.RE
+.SS "Explicit component creation"
+.sp
+See \(lqCreate explicit components\(rq to learn how to use the following option\&.
+.PP
+\fB-c\fR [\fINAME\fR:]\fICOMP\-CLS\-TYPE\fR\&.\fIPLUGIN\-NAME\fR\&.\fICOMP\-CLS\-NAME\fR, \fB--component\fR=[\fINAME\fR:]\fICOMP\-CLS\-TYPE\fR\&.\fIPLUGIN\-NAME\fR\&.\fICOMP\-CLS\-NAME\fR
+.RS 4
+Create a component named
+\fINAME\fR
+(if specified) from the component class of type
+\fICOMP\-CLS\-TYPE\fR
+named
+\fICOMP\-CLS\-NAME\fR
+found in the plugin named
+\fIPLUGIN\-NAME\fR, and set it as the current component\&.
+.sp
+The available values for
+\fICOMP\-CLS\-TYPE\fR
+are:
+.PP
+\fBsource\fR, \fBsrc\fR
+.RS 4
+Source component class\&.
+.RE
+.PP
+\fBfilter\fR, \fBflt\fR
+.RS 4
+Filter component class\&.
+.RE
+.PP
+\fBsink\fR
+.RS 4
+Sink component class\&.
+.RE
+.RE
+.SS "Common component creation"
+.sp
+See \(lqCreate explicit components\(rq and \(lqCreate implicit components from non\-option arguments\(rq to learn how to use the following options\&.
+.sp
+The following options apply to either the current explicit component (last \fB--component\fR option) or to ALL the implicit components created from the last non\-option argument\&.
+.PP
+\fB-l\fR \fILVL\fR, \fB--log-level\fR=\fILVL\fR
+.RS 4
+Set the log level of the current component(s) to
+\fILVL\fR\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fB-p\fR \fIPARAMS\fR, \fB--params\fR=\fIPARAMS\fR
+.RS 4
+Add
+\fIPARAMS\fR
+to the initialization parameters of the current component(s)\&.
+.sp
+If
+\fIPARAMS\fR
+contains a key which exists in the initialization parameters of the current component(s), replace the parameter\&.
+.sp
+The format of
+\fIPARAMS\fR
+is a comma\-separated list of
+\fINAME\fR=\fIVALUE\fR
+assignments:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fINAME\fR=\fIVALUE\fR[,\fINAME\fR=\fIVALUE\fR]\&...
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fINAME\fR
+.RS 4
+Parameter name (C\ \&identifier plus the
+\fB:\fR,
+\fB.\fR, and
+\fB-\fR
+characters)\&.
+.RE
+.PP
+\fIVALUE\fR
+.RS 4
+One of:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBnull\fR,
+\fBnul\fR,
+\fBNULL\fR: null value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrue\fR,
+\fBTRUE\fR,
+\fByes\fR,
+\fBYES\fR: true boolean value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBfalse\fR,
+\fBFALSE\fR,
+\fBno\fR,
+\fBNO\fR: false boolean value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Binary (\fB0b\fR
+prefix), octal (\fB0\fR
+prefix), decimal, or hexadecimal (\fB0x\fR
+prefix) unsigned (with
+\fB+\fR
+prefix) or signed 64\-bit integer\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Double precision floating point number (scientific notation is accepted)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Unquoted string with no special characters, and not matching any of the null and boolean value symbols above\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Double\-quoted string (accepts escape characters)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Array, formatted as an opening
+\fB[\fR, a comma\-separated list of
+\fIVALUE\fR, and a closing
+\fB]\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Map, formatted as an opening
+\fB{\fR, a comma\-separated list of
+\fINAME\fR=\fIVALUE\fR
+assignments, and a closing
+\fB}\fR\&.
+.RE
+.sp
+You may put whitespaces around the individual
+\fB=\fR
+(assignment),
+\fB,\fR
+(separator),
+\fB[\fR
+(array beginning),
+\fB]\fR
+(array end),
+\fB{\fR
+(map beginning), and
+\fB}\fR
+(map end) characters\&.
+.RE
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-params=\*(Aqmany=null, fresh=yes, condition=false, squirrel=\-782329,
+          play=+23, observe=3\&.14, simple=beef,
+          needs\-quotes="some string",
+          escape\&.chars\-are:allowed="a \e" quote",
+          things=[1, "hello", 2\&.71828],
+          frog={slow=2, bath=[bike, 23], blind=NO}\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBImportant\fR
+.ps -1
+.br
+Like in the example above, make sure to single\-quote the whole argument when you run this command from a shell, as it can contain many special characters\&.
+.sp .5v
+.RE
+.RE
+.SS "Legacy options to create implicit components"
+.PP
+\fB-i\fR \fIFORMAT\fR, \fB--input-format\fR=\fIFORMAT\fR
+.RS 4
+Force the
+\fBconvert\fR
+command to create components from a specific component class for non\-option arguments (see
+\(lqCreate implicit components from non\-option arguments\(rq), or list available remote LTTng tracing sessions\&.
+.sp
+The available values for
+\fIFORMAT\fR
+are:
+.PP
+\fBctf\fR
+.RS 4
+Use the
+\fBsource.ctf.fs\fR
+component class\&.
+.sp
+Each non\-option argument of the command line is a CTF trace or CTF trace chunk\&.
+.sp
+See
+\fBbabeltrace2-source.ctf.fs\fR(7)
+to learn more about this component class\&.
+.RE
+.PP
+\fBlttng-live\fR
+.RS 4
+Depending on the format of the first non\-option argument:
+.PP
+\fBnet[4]://RDHOST[:RDPORT]\fR
+.RS 4
+List the available remote LTTng tracing sessions for the LTTng relay daemon at the address
+\fBRDHOST\fR
+and port
+\fBRDPORT\fR
+(5344 if not specified), and then exit\&.
+.RE
+.PP
+\fBnet[4]://RDHOST[:RDPORT]/host/TGTHOST/SESSION\fR
+.RS 4
+Use the
+\fBsource.ctf.lttng-live\fR
+component class\&.
+.sp
+See
+\fBbabeltrace2-source.ctf.lttng-live\fR(7)
+to learn more about this component class and the URL format\&.
+.RE
+.RE
+.sp
+You can specify at most one
+\fB--input-format\fR
+option\&.
+.RE
+.PP
+\fB-o\fR \fIFORMAT\fR, \fB--output-format\fR=\fIFORMAT\fR
+.RS 4
+Create an implicit sink component with format
+\fIFORMAT\fR
+or print the metadata text of a CTF trace\&.
+.sp
+The available values for
+\fIFORMAT\fR
+are:
+.PP
+\fBtext\fR
+.RS 4
+Create an implicit
+\fBsink.text.pretty\fR
+component\&.
+.sp
+See
+\(lqImplicit \fBsink.text.pretty\fR component\(rq\&.
+.sp
+See
+\fBbabeltrace2-sink.text.pretty\fR(7)
+to learn more about this component class\&.
+.RE
+.PP
+\fBctf\fR
+.RS 4
+Create an implicit
+\fBsink.ctf.fs\fR
+component\&. Specify the base output path with the
+\fB--output\fR
+option\&.
+.sp
+See
+\fBbabeltrace2-sink.ctf.fs\fR(7)
+to learn more about this component class\&.
+.RE
+.PP
+\fBdummy\fR
+.RS 4
+Create an implicit
+\fBsink.utils.dummy\fR
+component\&.
+.sp
+See
+\fBbabeltrace2-sink.utils.dummy\fR(7)
+to learn more about this component class\&.
+.RE
+.PP
+\fBctf-metadata\fR
+.RS 4
+Print the metadata text of a CTF trace and exit\&.
+.sp
+The first non\-option argument specifies the path to the CTF trace\&.
+.RE
+.sp
+You can specify at most one
+\fB--output-format\fR
+option\&.
+.RE
+.SS "Implicit source\&.ctf\&.fs component(s)"
+.sp
+See \fBbabeltrace2-source.ctf.fs\fR(7) to learn more about this component class\&.
+.PP
+\fB--clock-force-correlate\fR
+.RS 4
+Set the
+\fBforce-clock-class-origin-unix-epoch\fR
+initialization parameter of all the implicit
+\fBsource.ctf.fs\fR
+components to true\&.
+.sp
+The
+\fBforce-clock-class-origin-unix-epoch\fR
+initialization parameter makes all the created clock classes have a Unix epoch origin\&. This is useful to force the clock classes of multiple traces to be compatible even if they are not inherently\&.
+.RE
+.PP
+\fB--clock-offset\fR=\fISEC\fR
+.RS 4
+Set the
+\fBclock-class-offset-s\fR
+initialization parameter of all the implicit
+\fBsource.ctf.fs\fR
+components to
+\fISEC\fR\&.
+.sp
+The
+\fBclock-class-offset-s\fR
+initialization parameter adds
+\fISEC\fR
+seconds to the offsets of all the clock classes that the component creates\&.
+.sp
+You can combine this option with
+\fB--clock-offset-ns\fR\&.
+.RE
+.PP
+\fB--clock-offset-ns\fR=\fINS\fR
+.RS 4
+Set the
+\fBclock-class-offset-ns\fR
+initialization parameter of all the implicit
+\fBsource.ctf.fs\fR
+components to
+\fINS\fR\&.
+.sp
+The
+\fBclock-class-offset-ns\fR
+initialization parameter adds
+\fINS\fR
+nanoseconds to the offsets of all the clock classes that the component creates\&.
+.sp
+You can combine this option with
+\fB--clock-offset-s\fR\&.
+.RE
+.SS "Implicit filter\&.utils\&.trimmer component"
+.sp
+If you specify at least one of the following options, you create an implicit \fBfilter.utils.trimmer\fR component\&.
+.sp
+See \fBbabeltrace2-filter.utils.trimmer\fR(7) to learn more about this component class\&.
+.PP
+\fB--begin\fR=\fITIME\fR
+.RS 4
+Set the
+\fBbegin\fR
+initialization parameter of the component to
+\fITIME\fR\&.
+.sp
+You cannot use this option with the
+\fB--timerange\fR
+option\&.
+.sp
+The format of
+\fITIME\fR
+is one of:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIYYYY\fR\-\fIMM\fR\-\fIDD\fR \fIHH\fR:\fIII\fR[:\fISS\fR[\&.\fINANO\fR]]
+\fIHH\fR:\fIII\fR[:\fISS\fR[\&.\fINANO\fR]]
+[\-]\fISEC\fR[\&.\fINANO\fR]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIYYYY\fR
+.RS 4
+4\-digit year\&.
+.RE
+.PP
+\fIMM\fR
+.RS 4
+2\-digit month (January is
+\fB01\fR)\&.
+.RE
+.PP
+\fIDD\fR
+.RS 4
+2\-digit day\&.
+.RE
+.PP
+\fIHH\fR
+.RS 4
+2\-digit hour (24\-hour format)\&.
+.RE
+.PP
+\fIII\fR
+.RS 4
+2\-digit minute\&.
+.RE
+.PP
+\fISS\fR
+.RS 4
+2\-digit second\&.
+.RE
+.PP
+\fINANO\fR
+.RS 4
+Nanoseconds (up to nine digits)\&.
+.RE
+.PP
+\fISEC\fR
+.RS 4
+Seconds since origin\&.
+.RE
+.RE
+.PP
+\fB--end\fR=\fITIME\fR
+.RS 4
+Set the
+\fBend\fR
+initialization parameter of the component to
+\fITIME\fR\&.
+.sp
+You cannot use this option with the
+\fB--timerange\fR
+option\&.
+.sp
+See the
+\fB--begin\fR
+option for the format of
+\fITIME\fR\&.
+.RE
+.PP
+\fB--timerange\fR=\fIBEGIN\fR,\fIEND\fR
+.RS 4
+Equivalent to
+\fB--begin\fR=\fIBEGIN\fR
+and
+\fB--end\fR=\fIEND\fR\&.
+.sp
+You can also surround the whole argument with
+\fB[\fR
+and
+\fB]\fR\&.
+.RE
+.SS "Implicit filter\&.lttng\-utils\&.debug\-info component"
+.sp
+If you specify at least one of the following options, you create an implicit \fBfilter.lttng-utils.debug-info\fR component\&. This component only alters compatible LTTng events\&.
+.sp
+See \fBbabeltrace2-filter.lttng-utils.debug-info\fR(7) to learn more about this component class\&.
+.PP
+\fB--debug-info\fR
+.RS 4
+Create an implicit
+\fBfilter.lttng-utils.debug-info\fR
+component\&.
+.sp
+This option is useless if you specify any of the options below\&.
+.RE
+.PP
+\fB--debug-info-dir\fR=\fIDIR\fR
+.RS 4
+Set the
+\fBdebug-info-dir\fR
+initialization parameter of the component to
+\fIDIR\fR\&.
+.sp
+The
+\fBdebug-info-dir\fR
+parameter indicates where the component should find the debugging information it needs if it\(cqs not found in the actual executable files\&.
+.RE
+.PP
+\fB--debug-info-full-path\fR
+.RS 4
+Set the
+\fBfull-path\fR
+initialization parameter of the component to true\&.
+.sp
+When the
+\fBfull-path\fR
+parameter is true, the component writes the full (absolute) paths to files in its debugging information fields instead of just the short names\&.
+.RE
+.PP
+\fB--debug-info-target-prefix\fR=\fIPREFIX\fR
+.RS 4
+Set the
+\fBtarget-prefix\fR
+initialization parameter of the component to
+\fIPREFIX\fR\&.
+.sp
+The
+\fBtarget-prefix\fR
+parameter is a path to prepend to the paths to executables recorded in the trace\&. For example, if a trace contains the executable path
+\fB/usr/bin/ls\fR
+in its state dump events, and you specify
+\fB--debug-info-target-prefix\fR=\fB/home/user/boards/xyz/root\fR, then the component opens the
+\fB/home/user/boards/xyz/root/usr/bin/ls\fR
+file to find debugging information\&.
+.RE
+.SS "Implicit sink\&.text\&.pretty component"
+.sp
+If you specify at least one of the following options, you force the \fBconvert\fR command\(cqs sink component to be an implicit \fBsink.text.pretty\fR component\&.
+.sp
+See \fBbabeltrace2-sink.text.pretty\fR(7) to learn more about this component class\&.
+.PP
+\fB--clock-cycles\fR
+.RS 4
+Set the
+\fBclock-seconds\fR
+initialization parameter of the component to true\&.
+.sp
+The
+\fBclock-cycles\fR
+parameter makes the component print the event time in clock cycles\&.
+.RE
+.PP
+\fB--clock-date\fR
+.RS 4
+Set the
+\fBclock-date\fR
+initialization parameter of the component to true\&.
+.sp
+The
+\fBclock-date\fR
+parameter makes the component print the date and the time of events\&.
+.RE
+.PP
+\fB--clock-gmt\fR
+.RS 4
+Set the
+\fBclock-gmt\fR
+initialization parameter of the component to true\&.
+.sp
+The
+\fBclock-gmt\fR
+parameter makes the component not apply the local timezone to the printed times\&.
+.RE
+.PP
+\fB--clock-seconds\fR
+.RS 4
+Set the
+\fBclock-seconds\fR
+initialization parameter of the component to true\&.
+.sp
+The
+\fBclock-seconds\fR
+parameter makes the component print the event times in seconds since the Unix epoch\&.
+.RE
+.PP
+\fB--color\fR=\fIWHEN\fR
+.RS 4
+Set the
+\fBcolor\fR
+initialization parameter of the component to
+\fIWHEN\fR\&.
+.sp
+The available values for
+\fIWHEN\fR
+are:
+.PP
+\fBauto\fR
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBnever\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBalways\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.sp
+The
+\fBauto\fR
+and
+\fBalways\fR
+values have no effect if the
+\fBBABELTRACE_TERM_COLOR\fR
+environment variable is set to
+\fBNEVER\fR\&.
+.RE
+.PP
+\fB--fields\fR=\fIFIELD\fR[,\fIFIELD\fR]\&...
+.RS 4
+For each
+\fIFIELD\fR, set the
+\fBfield-FIELD\fR
+initialization parameter of the component to true\&.
+.sp
+For example,
+\fB--fields\fR=\fBtrace,loglevel,emf\fR
+sets the
+\fBfield-trace\fR,
+\fBfield-loglevel\fR, and
+\fBfield-emf\fR
+initialization parameters to true\&.
+.sp
+The available value for
+\fIFIELD\fR
+are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrace\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrace:hostname\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrace:domain\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrace:procname\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrace:vpid\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBloglevel\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBemf\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBcallsite\fR
+.RE
+.RE
+.PP
+\fB--names\fR=\fINAME\fR[,\fINAME\fR]\&...
+.RS 4
+For each
+\fINAME\fR, set the
+\fBname-NAME\fR
+initialization parameter of the component to true\&.
+.sp
+For example,
+\fB--names\fR=\fBpayload,scope\fR
+sets the
+\fBname-payload\fR
+and
+\fBname-scope\fR
+initialization parameters to true\&.
+.sp
+The available value for
+\fINAME\fR
+are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBpayload\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBcontext\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBscope\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBheader\fR
+.RE
+.RE
+.PP
+\fB--no-delta\fR
+.RS 4
+Set the
+\fBno-delta\fR
+initialization parameter of the component to true\&.
+.sp
+When the
+\fBno-delta\fR
+parameter is true, the component does not print the duration since the last event on the line\&.
+.RE
+.SS "Shared options"
+.PP
+\fB-w\fR \fIPATH\fR, \fB--output\fR=\fIPATH\fR
+.RS 4
+With
+\fB--output-format\fR=\fBctf-metadata\fR
+or
+\fB--input-format\fR=\fBlttng-live\fR
+(when printing the available remote LTTng tracing sessions), write the text to the file
+\fIPATH\fR
+instead of the standard output\&.
+.sp
+When you specify
+\fB--output-format\fR=\fBctf\fR, set the
+\fBpath\fR
+initialization parameter of the implicit
+\fBsink.ctf.fs\fR
+component to
+\fIPATH\fR\&.
+.sp
+Without any specified sink component, explicit or implicit, force the
+\fBconvert\fR
+command\(cqs sink component to be an implicit
+\fBsink.text.pretty\fR
+component and set its
+\fBpath\fR
+initialization parameter to
+\fIPATH\fR\&.
+.sp
+See
+\fBbabeltrace2-sink.ctf.fs\fR(7)
+and
+\fBbabeltrace2-sink.text.pretty\fR(7)
+to learn more about those component classes\&.
+.RE
+.SS "Equivalent babeltrace2 run arguments"
+.PP
+\fB--run-args\fR
+.RS 4
+Print the equivalent
+\fBbabeltrace2-run\fR(1)
+arguments instead of creating and running the conversion graph\&.
+.sp
+The printed arguments are space\-separated and individually escaped for safe shell input\&.
+.sp
+You cannot use this option with the
+\fB--run-args-0\fR
+or
+\fB--stream-intersection\fR
+option\&.
+.RE
+.PP
+\fB--run-args-0\fR
+.RS 4
+Print the equivalent
+\fBbabeltrace2-run\fR(1)
+arguments instead of creating and running the conversion graph\&.
+.sp
+The printed arguments are separated with a null character and NOT escaped for safe shell input\&.
+.sp
+You cannot use this option with the
+\fB--run-args\fR
+or
+\fB--stream-intersection\fR
+option\&.
+.RE
+.SS "Conversion graph configuration"
+.PP
+\fB--retry-duration\fR=\fITIME\-US\fR
+.RS 4
+Set the duration of a single retry to
+\fITIME\-US\fR\ \&\(mcs when a sink component reports "try again later" (busy network or file system, for example)\&.
+.sp
+Default: 100000 (100\ \&ms)\&.
+.RE
+.PP
+\fB--stream-intersection\fR
+.RS 4
+Enable the stream intersection mode\&.
+.sp
+In this mode, for each trace, the
+\fBconvert\fR
+command filters out the events and other messages which are not in the time range where
+\fIall\fR
+the trace\(cqs streams are active\&.
+.sp
+To use this option, all the source components, explicit and implicit, must have classes which support the
+\fBbabeltrace.trace-infos\fR
+query object (see
+\fBbabeltrace2-query-babeltrace.trace-infos\fR(7))\&. The only Babeltrace\ \&2 project\(cqs component class which supports this query object is
+\fBsource.ctf.fs\fR\&.
+.sp
+You cannot use this option with the
+\fB--run-args\fR
+or
+\fB--run-args-0\fR
+option\&.
+.RE
+.SS "Other legacy options"
+.sp
+The following options exist for backward compatibility with the \fBbabeltrace\fR(1) program\&.
+.PP
+\fB-d\fR, \fB--debug\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBTRACE\fR, where
+\fB--log-level\fR
+is the general option (not this command\(cqs
+\fB--log-level\fR
+option)\&.
+.RE
+.PP
+\fB-v\fR, \fB--verbose\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBINFO\fR, where
+\fB--log-level\fR
+is the general option (not this command\(cqs
+\fB--log-level\fR
+option)\&.
+.sp
+This option also sets the
+\fBverbose\fR
+parameter of the implicit
+\fBsink.text.pretty\fR
+component (see
+\fBbabeltrace2-sink.text.pretty\fR(7)) to true\&.
+.RE
+.SS "Command information"
+.PP
+\fB-h\fR, \fB--help\fR
+.RS 4
+Show the command\(cqs help and quit\&.
+.RE
+.SH "EXAMPLES"
+.PP
+\fBExample\ \&1.\ \&Pretty\-print the events, in order, of one or more CTF traces\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-ctf\-traces
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-ctf\-traces
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-ctf\-trace\-1 my\-ctf\-trace\-2 my\-ctf\-trace\-3
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&2.\ \&Trim a CTF trace and pretty\-print the events\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-ctf\-trace \-\-begin=22:55:43\&.658582931 \e
+                           \-\-end=22:55:46\&.967687564
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-trace \-\-begin=22:55:43\&.658582931
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-trace \-\-end=22:55:46\&.967687564
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-trace \-\-timerange=22:55:43,22:55:46\&.967687564
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&3.\ \&Trim a CTF trace, enable the stream intersection mode, and write a CTF trace\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-ctf\-trace \-\-stream\-intersection \e
+              \-\-timerange=22:55:43,22:55:46\&.967687564 \e
+              \-\-output\-format=ctf \-\-output=out\-ctf\-trace
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&4.\ \&Print the available remote LTTng sessions (through LTTng live)\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 \-\-input\-format=lttng\-live net://localhost
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&5.\ \&Pretty\-print LTTng live events\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 net://localhost/host/myhostname/my\-session\-name
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&6.\ \&Record LTTng live traces to the file system (as CTF traces)\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 net://localhost/host/myhostname/my\-session\-name \e
+              \-\-params=session\-not\-found\-action=end \e
+              \-\-output\-format=ctf \-\-output=out\-ctf\-traces
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&7.\ \&Read a CTF trace as fast as possible using a dummy output\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 my\-trace \-\-output\-format=dummy
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&8.\ \&Read three CTF traces in stream intersection mode, add debugging information, and pretty\-print them to a file\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 ctf\-trace1 ctf\-trace2 ctf\-trace3 \-\-stream\-intersection \e
+              \-\-debug\-info \-\-output=pretty\-out
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&9.\ \&Pretty\-print a CTF trace and traces from an explicit source component, with the event times showed in seconds since the Unix epoch\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 ctf\-trace \-\-component=src\&.my\-plugin\&.my\-src \e
+              \-\-params=\*(Aqpath="spec\-trace",output\-some\-event\-type=yes\*(Aq \e
+              \-\-clock\-seconds
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&10.\ \&Send LTTng live events to an explicit sink component\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 net://localhost/host/myhostname/mysession \e
+              \-\-component=sink\&.my\-plugin\&.my\-sink
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&11.\ \&Trim a CTF trace, add debugging information, apply an explicit filter component, and write as a CTF trace\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/ctf/trace \-\-timerange=22:14:38,22:15:07 \e
+              \-\-debug\-info \-\-component=filter\&.my\-plugin\&.my\-filter \e
+              \-\-params=criteria=xyz,ignore\-abc=yes \e
+              \-\-output\-format=ctf \-\-output=out\-ctf\-trace
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&12.\ \&Print the metadata text of a CTF trace\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/ctf/trace \-\-output\-format=ctf\-metadata
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT VARIABLES"
+.SS "Babeltrace\ \&2 library"
+.PP
+\fBBABELTRACE_EXEC_ON_ABORT\fR=\fICMDLINE\fR
+.RS 4
+Execute the command line
+\fICMDLINE\fR, as parsed like a UNIX\ \&98 shell, when any part of the Babeltrace\ \&2 project unexpectedly aborts\&.
+.sp
+The application only aborts when the executed command returns, ignoring its exit status\&.
+.sp
+This environment variable is ignored when the application has the
+\fBsetuid\fR
+or the
+\fBsetgid\fR
+access right flag set\&.
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR\fR=(\fBAUTO\fR | \fBNEVER\fR | \fBALWAYS\fR)
+.RS 4
+Force the terminal color support for the
+\fBbabeltrace2\fR(1)
+program and the project\(cqs plugins\&.
+.sp
+The available values are:
+.PP
+\fBAUTO\fR
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBNEVER\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBALWAYS\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR_BRIGHT_MEANS_BOLD\fR=\fB0\fR
+.RS 4
+Set to
+\fB0\fR
+to emit
+SGR (see <https://en.wikipedia.org/wiki/ANSI_escape_code>)
+codes 90 to 97 for bright colors instead of bold (SGR code\ \&1) and standard color codes (SGR codes 30 to 37)\&.
+.RE
+.PP
+\fBBABELTRACE_PLUGIN_PATH\fR=\fIPATHS\fR
+.RS 4
+Set the list of directories, in order, in which dynamic plugins can be found before other directories are considered to
+\fIPATHS\fR
+(colon\-separated, or semicolon on Windows)\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_DISABLE_PYTHON_PLUGINS\fR=\fB1\fR
+.RS 4
+Disable the loading of any Babeltrace\ \&2 Python plugin\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_INIT_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force the Babeltrace\ \&2 library\(cqs initial log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the Babeltrace\ \&2 library logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fBLIBBABELTRACE2_NO_DLCLOSE\fR=\fB1\fR
+.RS 4
+Make the Babeltrace\ \&2 library leave any dynamically loaded modules (plugins and plugin providers) open at exit\&. This can be useful for debugging purposes\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_PLUGIN_PROVIDER_DIR\fR=\fIDIR\fR
+.RS 4
+Set the directory from which the Babeltrace\ \&2 library dynamically loads plugin provider shared objects to
+\fIDIR\fR\&.
+.sp
+If this environment variable is set, it overrides the default plugin provider directory\&.
+.RE
+.SS "Babeltrace\ \&2 Python bindings"
+.PP
+\fBBABELTRACE_PYTHON_BT2_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force the Babeltrace\ \&2 Python bindings log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the Python bindings logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.SS "CLI"
+.PP
+\fBBABELTRACE_CLI_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force
+\fBbabeltrace2\fR
+CLI\(cqs log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the CLI logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_CLI_WARN_COMMAND_NAME_DIRECTORY_CLASH\fR=\fB0\fR
+.RS 4
+Disable the warning message which
+\fBbabeltrace2-convert\fR(1)
+prints when you convert a trace with a relative path that\(cqs also the name of a
+\fBbabeltrace2\fR
+command\&.
+.RE
+.PP
+\fBBABELTRACE_DEBUG\fR=\fB1\fR
+.RS 4
+Legacy variable: equivalent to setting the
+\fB--log-level\fR
+option to
+\fBTRACE\fR\&.
+.RE
+.PP
+\fBBABELTRACE_VERBOSE\fR=\fB1\fR
+.RS 4
+Legacy variable: equivalent to setting the
+\fB--log-level\fR
+option to
+\fBINFO\fR\&.
+.RE
+.SH "FILES"
+.PP
+\fB$HOME/.local/lib/babeltrace2/plugins\fR
+.RS 4
+User plugin directory\&.
+.RE
+.PP
+\fB/usr/local/lib/babeltrace2/plugins\fR
+.RS 4
+System plugin directory\&.
+.RE
+.PP
+\fB/usr/local/lib/babeltrace2/plugin-providers\fR
+.RS 4
+System plugin provider directory\&.
+.RE
+.SH "EXIT STATUS"
+.sp
+\fB0\fR on success, \fB1\fR otherwise\&.
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This command is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2\fR(1), \fBbabeltrace2-run\fR(1)

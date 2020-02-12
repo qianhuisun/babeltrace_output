@@ -1,0 +1,799 @@
+'\" t
+.\"     Title: babeltrace2-query
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-QUERY" "1" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-query \- Query an object from a Babeltrace 2 component class
+.SH "SYNOPSIS"
+.sp
+.nf
+\fBbabeltrace2\fR [\fIGENERAL OPTIONS\fR] \fBquery\fR [\fB--params\fR=\fIPARAMS\fR]
+            \fICOMP\-CLS\-TYPE\fR\&.\fIPLUGIN\-NAME\fR\&.\fICOMP\-CLS\-NAME\fR \fIOBJECT\fR
+.fi
+.SH "DESCRIPTION"
+.sp
+The \fBquery\fR command queries the object named \fIOBJECT\fR from the component class named \fICOMP\-CLS\-NAME\fR of the type \fICOMP\-CLS\-TYPE\fR found in the Babeltrace\ \&2 plugin named \fIPLUGIN\-NAME\fR and prints the results\&.
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.sp
+The available values for \fICOMP\-CLS\-TYPE\fR are:
+.PP
+\fBsource\fR, \fBsrc\fR
+.RS 4
+Source component class\&.
+.RE
+.PP
+\fBfilter\fR, \fBflt\fR
+.RS 4
+Filter component class\&.
+.RE
+.PP
+\fBsink\fR
+.RS 4
+Sink component class\&.
+.RE
+.sp
+The exact object names and the parameters that a given component class expects are described in its own documentation\&. \fBbabeltrace2-help\fR(1) can generally provide this information\&.
+.sp
+You can use the \fB--params\fR option to pass parameters to the component class\(cqs query operation\&.
+.sp
+The output of the \fBquery\fR command can look like YAML (see <https://yaml.org/>), but it\(cqs not guaranteed to be YAML\-compliant\&.
+.sp
+See \(lqEXAMPLES\(rq for usage examples\&.
+.SH "OPTIONS"
+.SS "General"
+.sp
+You can use those options before the command name\&.
+.sp
+See \fBbabeltrace2\fR(1) for more details\&.
+.PP
+\fB-d\fR, \fB--debug\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBTRACE\fR\&.
+.RE
+.PP
+\fB-l\fR \fILVL\fR, \fB--log-level\fR=\fILVL\fR
+.RS 4
+Set the log level of all known Babeltrace\ \&2 loggers to
+\fILVL\fR\&.
+.RE
+.PP
+\fB--omit-home-plugin-path\fR
+.RS 4
+Do not search for plugins in
+\fB$HOME/.local/lib/babeltrace2/plugins\fR\&.
+.RE
+.PP
+\fB--omit-system-plugin-path\fR
+.RS 4
+Do not search for plugins in
+\fB/usr/local/lib/babeltrace2/plugins\fR\&.
+.RE
+.PP
+\fB--plugin-path\fR=\fIPATH\fR[:\fIPATH\fR]\&...
+.RS 4
+Add
+\fIPATH\fR
+to the list of paths in which plugins can be found\&.
+.RE
+.PP
+\fB-v\fR, \fB--verbose\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBINFO\fR\&.
+.RE
+.SS "Query parameters"
+.PP
+\fB-p\fR \fIPARAMS\fR, \fB--params\fR=\fIPARAMS\fR
+.RS 4
+Set the query parameters to
+\fIPARAMS\fR\&.
+.sp
+The format of
+\fIPARAMS\fR
+is a comma\-separated list of
+\fINAME\fR=\fIVALUE\fR
+assignments:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fINAME\fR=\fIVALUE\fR[,\fINAME\fR=\fIVALUE\fR]\&...
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fINAME\fR
+.RS 4
+Parameter name (C\ \&identifier plus the
+\fB:\fR,
+\fB.\fR, and
+\fB-\fR
+characters)\&.
+.RE
+.PP
+\fIVALUE\fR
+.RS 4
+One of:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBnull\fR,
+\fBnul\fR,
+\fBNULL\fR: null value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrue\fR,
+\fBTRUE\fR,
+\fByes\fR,
+\fBYES\fR: true boolean value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBfalse\fR,
+\fBFALSE\fR,
+\fBno\fR,
+\fBNO\fR: false boolean value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Binary (\fB0b\fR
+prefix), octal (\fB0\fR
+prefix), decimal, or hexadecimal (\fB0x\fR
+prefix) unsigned (with
+\fB+\fR
+prefix) or signed 64\-bit integer\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Double precision floating point number (scientific notation is accepted)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Unquoted string with no special characters, and not matching any of the null and boolean value symbols above\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Double\-quoted string (accepts escape characters)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Array, formatted as an opening
+\fB[\fR, a comma\-separated list of
+\fIVALUE\fR, and a closing
+\fB]\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Map, formatted as an opening
+\fB{\fR, a comma\-separated list of
+\fINAME\fR=\fIVALUE\fR
+assignments, and a closing
+\fB}\fR\&.
+.RE
+.sp
+You may put whitespaces around the individual
+\fB=\fR
+(assignment),
+\fB,\fR
+(separator),
+\fB[\fR
+(array beginning),
+\fB]\fR
+(array end),
+\fB{\fR
+(map beginning), and
+\fB}\fR
+(map end) characters\&.
+.RE
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-params=\*(Aqmany=null, fresh=yes, condition=false, squirrel=\-782329,
+          play=+23, observe=3\&.14, simple=beef,
+          needs\-quotes="some string",
+          escape\&.chars\-are:allowed="a \e" quote",
+          things=[1, "hello", 2\&.71828],
+          frog={slow=2, bath=[bike, 23], blind=NO}\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBImportant\fR
+.ps -1
+.br
+Like in the example above, make sure to single\-quote the whole argument when you run this command from a shell, as it can contain many special characters\&.
+.sp .5v
+.RE
+.RE
+.SS "Command information"
+.PP
+\fB-h\fR, \fB--help\fR
+.RS 4
+Show the command\(cqs help and quit\&.
+.RE
+.SH "EXAMPLES"
+.PP
+\fBExample\ \&1.\ \&Query the available tracing sessions of a local LTTng relay daemon\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 query src\&.ctf\&.lttng\-live sessions \e
+                    \-\-params=\*(Aqurl="net://localhost"\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&2.\ \&Query the metadata info (includes the decoded plain text) of a CTF trace located on the local file system\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 query src\&.ctf\&.fs metadata\-info \e
+                    \-\-params=\*(Aqpath="/path/to/trace"\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&3.\ \&Query the trace infos of a CTF trace located on the local file system\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 query src\&.ctf\&.fs babeltrace\&.trace\-infos \e
+                    \-\-params=\*(Aqpath="/path/to/trace"\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&4.\ \&Query some object from a sink component class without parameters\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 query sink\&.my\-plugin\&.my\-sink some\-object
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT VARIABLES"
+.SS "Babeltrace\ \&2 library"
+.PP
+\fBBABELTRACE_EXEC_ON_ABORT\fR=\fICMDLINE\fR
+.RS 4
+Execute the command line
+\fICMDLINE\fR, as parsed like a UNIX\ \&98 shell, when any part of the Babeltrace\ \&2 project unexpectedly aborts\&.
+.sp
+The application only aborts when the executed command returns, ignoring its exit status\&.
+.sp
+This environment variable is ignored when the application has the
+\fBsetuid\fR
+or the
+\fBsetgid\fR
+access right flag set\&.
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR\fR=(\fBAUTO\fR | \fBNEVER\fR | \fBALWAYS\fR)
+.RS 4
+Force the terminal color support for the
+\fBbabeltrace2\fR(1)
+program and the project\(cqs plugins\&.
+.sp
+The available values are:
+.PP
+\fBAUTO\fR
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBNEVER\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBALWAYS\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR_BRIGHT_MEANS_BOLD\fR=\fB0\fR
+.RS 4
+Set to
+\fB0\fR
+to emit
+SGR (see <https://en.wikipedia.org/wiki/ANSI_escape_code>)
+codes 90 to 97 for bright colors instead of bold (SGR code\ \&1) and standard color codes (SGR codes 30 to 37)\&.
+.RE
+.PP
+\fBBABELTRACE_PLUGIN_PATH\fR=\fIPATHS\fR
+.RS 4
+Set the list of directories, in order, in which dynamic plugins can be found before other directories are considered to
+\fIPATHS\fR
+(colon\-separated, or semicolon on Windows)\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_DISABLE_PYTHON_PLUGINS\fR=\fB1\fR
+.RS 4
+Disable the loading of any Babeltrace\ \&2 Python plugin\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_INIT_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force the Babeltrace\ \&2 library\(cqs initial log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the Babeltrace\ \&2 library logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fBLIBBABELTRACE2_NO_DLCLOSE\fR=\fB1\fR
+.RS 4
+Make the Babeltrace\ \&2 library leave any dynamically loaded modules (plugins and plugin providers) open at exit\&. This can be useful for debugging purposes\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_PLUGIN_PROVIDER_DIR\fR=\fIDIR\fR
+.RS 4
+Set the directory from which the Babeltrace\ \&2 library dynamically loads plugin provider shared objects to
+\fIDIR\fR\&.
+.sp
+If this environment variable is set, it overrides the default plugin provider directory\&.
+.RE
+.SS "Babeltrace\ \&2 Python bindings"
+.PP
+\fBBABELTRACE_PYTHON_BT2_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force the Babeltrace\ \&2 Python bindings log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the Python bindings logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.SS "CLI"
+.PP
+\fBBABELTRACE_CLI_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force
+\fBbabeltrace2\fR
+CLI\(cqs log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the CLI logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_CLI_WARN_COMMAND_NAME_DIRECTORY_CLASH\fR=\fB0\fR
+.RS 4
+Disable the warning message which
+\fBbabeltrace2-convert\fR(1)
+prints when you convert a trace with a relative path that\(cqs also the name of a
+\fBbabeltrace2\fR
+command\&.
+.RE
+.PP
+\fBBABELTRACE_DEBUG\fR=\fB1\fR
+.RS 4
+Legacy variable: equivalent to setting the
+\fB--log-level\fR
+option to
+\fBTRACE\fR\&.
+.RE
+.PP
+\fBBABELTRACE_VERBOSE\fR=\fB1\fR
+.RS 4
+Legacy variable: equivalent to setting the
+\fB--log-level\fR
+option to
+\fBINFO\fR\&.
+.RE
+.SH "FILES"
+.PP
+\fB$HOME/.local/lib/babeltrace2/plugins\fR
+.RS 4
+User plugin directory\&.
+.RE
+.PP
+\fB/usr/local/lib/babeltrace2/plugins\fR
+.RS 4
+System plugin directory\&.
+.RE
+.PP
+\fB/usr/local/lib/babeltrace2/plugin-providers\fR
+.RS 4
+System plugin provider directory\&.
+.RE
+.SH "EXIT STATUS"
+.sp
+\fB0\fR on success, \fB1\fR otherwise\&.
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This command is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2\fR(1)

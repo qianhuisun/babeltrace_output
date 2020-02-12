@@ -1,0 +1,37 @@
+== BUGS
+
+If you encounter any issue or usability problem, please report it on the
+https://bugs.lttng.org/projects/babeltrace[Babeltrace bug tracker].
+
+
+== RESOURCES
+
+The Babeltrace project shares some communication channels with the
+https://lttng.org/[LTTng project].
+
+* https://babeltrace.org/[Babeltrace website]
+* https://lists.lttng.org[Mailing list] for support and
+  development: `lttng-dev@lists.lttng.org`
+* irc://irc.oftc.net/lttng[IRC channel]: `#lttng` on `irc.oftc.net`
+* https://bugs.lttng.org/projects/babeltrace[Bug tracker]
+* https://git.efficios.com/?p=babeltrace.git[Git repository]
+* https://github.com/efficios/babeltrace[GitHub project]
+* https://ci.lttng.org/view/Babeltrace/[Continuous integration]
+* https://review.lttng.org/q/project:babeltrace[Code review]
+
+
+== AUTHORS
+
+The Babeltrace~2 project is the result of hard work by many regular
+developers and occasional contributors.
+
+The current project maintainer is
+mailto:jeremie.galarneau@efficios.com[Jérémie Galarneau].
+
+
+== COPYRIGHT
+
+This {manpagetype} is part of the Babeltrace~2 project.
+
+Babeltrace is distributed under the
+https://opensource.org/licenses/MIT[MIT license].

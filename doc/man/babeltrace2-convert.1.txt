@@ -1,0 +1,923 @@
+= babeltrace2-convert(1)
+:manpagetype: command
+:revdate: 14 September 2019
+
+
+== NAME
+
+babeltrace2-convert - Convert one or more traces to a given format
+
+
+== SYNOPSIS
+
+Pretty-print (plain text) the events, in order, of one or more traces:
+
+[verse]
+*babeltrace2* [<<gen-opts,'GENERAL OPTIONS'>>] [*convert*] [opt:--retry-duration='TIME-US']
+            'TRACE-PATH'...
+
+Convert one or more traces to a given format:
+
+[verse]
+*babeltrace2* [<<gen-opts,'GENERAL OPTIONS'>>] [*convert*] [opt:--retry-duration='TIME-US']
+            'CONVERSION ARGS'
+
+Get the equivalent man:babeltrace2-run(1) command arguments to convert
+one or more traces to a given format:
+
+[verse]
+*babeltrace2* [<<gen-opts,'GENERAL OPTIONS'>>] [*convert*] [opt:--retry-duration='TIME-US']
+            (opt:--run-args | opt:--run-args-0) 'CONVERSION ARGS'
+
+Print the metadata text of a CTF trace:
+
+[verse]
+*babeltrace2* [<<gen-opts,'GENERAL OPTIONS'>>] [*convert*] [opt:--output='OUTPATH']
+            opt:--output-format=`ctf-metadata` 'TRACE-PATH'
+
+Print the available https://lttng.org/docs/#doc-lttng-live[remote LTTng
+tracing sessions]:
+
+[verse]
+*babeltrace2* [<<gen-opts,'GENERAL OPTIONS'>>] [*convert*] [opt:--output='OUTPATH']
+            opt:--input-format=`lttng-live` 'URL'
+
+
+== DESCRIPTION
+
+The `convert` command converts one or more traces to a given format,
+possibly with filters in the conversion path.
+
+include::common-see-babeltrace2-intro.txt[]
+
+[NOTE]
+====
+`convert` is the default man:babeltrace2(1) command: you generally don't
+need to specify its name. The following commands are equivalent if the
+`...` part does not start with another man:babeltrace2(1) command's
+name, like `run` or `list-plugins`:
+
+[role="term"]
+----
+$ babeltrace2 convert ...
+$ babeltrace2 ...
+----
+
+If you need to make sure that you are executing the `convert` command,
+use `babeltrace2 convert` explicitly.
+====
+
+More specifically, the `convert` command creates a conversion graph.
+
+A conversion graph is a specialized trace processing graph focused on
+the conversion of one or more traces to another format, possibly
+filtering or modifying their events and other messages in the process. A
+conversion graph is a linear chain of components once the source streams
+are merged:
+
+----
++----------+
+| source 1 @-.
++----------+ |
+             |  +-------+
++----------+ '->@       |    +---------+    +------------+
+| source 2 @--->@ muxer @--->@ trimmer @--->@ debug-info @-.
++----------+ .->@       |    +---------+    +------------+ |
+             |  +-------+                                  |
++----------+ |    .----------------------------------------'
+|   ...    @-'    |  +---------------+    +------+
++----------+      '->@ other filters |--->@ sink |
+                     +---------------+    +------+
+----
+
+Note that the trimmer, debugging information, and other filters are
+optional. See <<comp-create-impl-opt,``Create implicit components from
+options''>> to learn how to enable them.
+
+If you need another trace processing graph layout, use the more flexible
+man:babeltrace2-run(1) command.
+
+Like with the man:babeltrace2-run(1) command, you can create components
+explicitly with the opt:--component option (see
+<<comp-create-expl,``Create explicit components''>>). You can also use
+one of the many specific `convert` command options (see
+<<comp-create-impl-opt,``Create implicit components from options''>>)
+and non-option arguments (see <<comp-create-impl-non-opt,``Create
+implicit components from non-option arguments''>>) to create implicit
+components.
+
+An _implicit component_ is a component which is created and added to the
+conversion graph without an explicit instantiation through the
+opt:--component option. An implicit component is easier to create than
+an explicit component: this is why the `convert` command exists, as you
+can also create and run a conversion graph with the generic
+man:babeltrace2-run(1) command.
+
+For example, you can specify one or more CTF trace path as non-option
+arguments to pretty-print the merged events to the standard output:
+
+[role="term"]
+----
+$ babeltrace2 /path/to/trace /path/to/other/trace
+----
+
+This is the equivalent of creating and connecting together:
+
+* One compcls:source.ctf.fs components with its
+  manparam:source.ctf.fs:inputs initialization parameter set to
+  `/path/to/trace`.
+
+* One compcls:source.ctf.fs components with its
+  manparam:source.ctf.fs:inputs initialization parameter set to
+  `/path/to/other/trace`.
+
+* A compcls:filter.utils.muxer component.
+
+* A compcls:sink.text.pretty component.
+
+This creates the following conversion graph:
+
+----
++------------+    +-----------------+    +------------------+
+| src.ctf.fs |    | flt.utils.muxer |    | sink.text.pretty |
+|  [ctf-fs]  |    |     [muxer]     |    |     [pretty]     |
+|            |    |                 |    |                  |
+|    stream0 @--->@ in0         out @--->@ in               |
+|    stream1 @--->@ in1             |    +------------------+
+|    stream2 @--->@ in2             |
+|    stream3 @--->@ in3             |
++------------+    |                 |
+                  |                 |
++------------+    |                 |
+| src.ctf.fs |    |                 |
+| [ctf-fs-2] |    |                 |
+|            |    |                 |
+|    stream0 @--->@ in4             |
+|    stream1 @--->@ in5             |
++------------+    @ in6             |
+                  +-----------------+
+----
+
+It is equivalent to the following man:babeltrace2-run(1) command line:
+
+[role="term"]
+----
+$ babeltrace2 run --component=ctf-fs:src.ctf.fs \
+                  --params='inputs=["/path/to/trace"] \
+                  --component=ctf-fs-2:src.ctf.fs \
+                  --params='inputs=["/path/to/other/trace"] \
+                  --component=muxer:filter.utils.muxer \
+                  --component=pretty:sink.text.pretty \
+                  --connect=ctf*:muxer --connect=muxer:pretty
+----
+
+You can use the opt:--run-args option to make the `convert` command
+print its equivalent `run` command arguments instead of creating and
+running the conversion graph. The printed arguments are escaped for
+shells, which means you can use them as is on the command line and
+possibly add more options to the `run` command:
+
+[role="term"]
+----
+$ babeltrace2 run $(babeltrace2 --run-args /path/to/trace) ...
+----
+
+The opt:--run-args-0 option is like the opt:--run-args option, but the
+printed arguments are :not: escaped and they are separated by a null
+character instead of a space. This is useful if the resulting arguments
+are not the direct input of a shell, for example if passed to
+`xargs -0`.
+
+See <<examples,``EXAMPLES''>> for usage examples.
+
+
+[[comp-create-expl]]
+=== Create explicit components
+
+To explicitly create a component, use the opt:--component option. This
+option specifies:
+
+* **Optional**: The name of the component.
+
+* The type of the component class to instantiate: source, filter, or
+  sink.
+
+* The name of the plugin in which to find the component class to
+  instantiate.
+
+* The name of the component class to instantiate.
+
+You can use the opt:--component option multiple times to create
+multiple components. You can instantiate the same component class
+multiple times as different component instances.
+
+Immediately following a opt:--component option on the command line, the
+created component is known as the _current component_ (until the next
+opt:--component option or non-option argument).
+
+The following command-line options apply to the current component:
+
+opt:--log-level='LVL'::
+    Set the log level of the current component to 'LVL'.
+
+opt:--params='PARAMS'::
+    Add 'PARAMS' to the initialization parameters of the current
+    component.
++
+If 'PARAMS' contains a key which exists in the current component's
+initialization parameters, replace the parameter.
+
+See <<examples,``EXAMPLES''>> for usage examples.
+
+
+[[comp-create-impl-non-opt]]
+=== Create implicit components from non-option arguments
+
+When you specify a non-option argument to the `convert` command, it
+tries to find one or more components which can handle this argument.
+
+For example, with this command line:
+
+[role="term"]
+----
+$ babeltrace2 /path/to/trace
+----
+
+If `/path/to/trace` is a CTF trace directory, then the `convert` command
+creates a compcls:source.ctf.fs component to handle this specific trace.
+
+This automatic source component discovery mechanism is possible thanks
+to component classes which support the `babeltrace.support-info` query
+object (see man:babeltrace2-query-babeltrace.support-info(7)).
+
+The non-option argument can be a directory. If no component can handle
+that specific directory, then the `convert` command traverses that
+directory and recursively tries to find compatible components for each
+file and subdirectory. This means that a single non-option argument can
+lead to the creation of many implicit components.
+
+The following command-line options apply to :all: the implicit
+components created from the last non-option argument:
+
+opt:--log-level='LVL'::
+    Set the log level of those implicit components to 'LVL'.
+
+opt:--params='PARAMS'::
+    Add 'PARAMS' to the initialization parameters of those implicit
+    components.
++
+For a given implicit component, if 'PARAMS' contains a key which exists
+in this component's initialization parameters, replace the parameter.
+
+Note that it's also possible for two non-option arguments to cause the
+creation of a single implicit component. For example, if you specify:
+
+[role="term"]
+----
+$ babeltrace2 /path/to/chunk1 /path/to/chunk2
+----
+
+where `/path/to/chunk1` and `/path/to/chunk2` are paths to chunks of the
+same logical CTF trace, then the `convert` command creates a single
+compcls:source.ctf.fs component which receives both paths at
+initialization time. When this happens, any opt:--log-level or
+opt:--params option that you specify to one of them applies to the
+single implicit component. For example:
+
+[role="term"]
+----
+$ babeltrace2 /path/to/chunk1 --params=clock-class-offset-s=450 \
+              /path/to/chunk2 --params=clock-class-offset-ns=98 \
+              --log-level=INFO
+----
+
+Here, the single implicit component gets both `clock-class-offset-s` and
+`clock-class-offset-ns` initialization parameters, as well as the INFO
+log level.
+
+For backward compatibility with the man:babeltrace(1) program, the
+`convert` command ignores any non-option argument which does not cause
+the creation of any component. In that case, it emits a warning log
+statement and continues.
+
+
+[[comp-create-impl-opt]]
+=== Create implicit components from options
+
+There are many ways to create implicit components from options with the
+`convert` command:
+
+* To create an implicit compcls:filter.utils.trimmer component (stream
+  trimmer), specify the opt:--begin, opt:--end, or opt:--timerange
+  option.
++
+Examples:
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --begin=22:14:38 --end=22:15:07
+----
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --timerange=22:14:38,22:15:07
+----
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --end=12:31:04.882928015
+----
+
+* To create an implicit compcls:filter.lttng-utils.debug-info (add
+  debugging information to compatible LTTng events), specify any of the
+  opt:--debug-info, opt:--debug-info-dir, opt:--debug-info-full-path, or
+  opt:--debug-info-target-prefix options.
++
+Examples:
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --debug-info
+----
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace \
+              --debug-info-target-prefix=/tmp/tgt-root
+----
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --debug-info-full-path
+----
+
+* To create an implicit compcls:sink.text.pretty component
+  (pretty-printing text output to the standard output or to a file),
+  specify no other sink components, explicit or implicit.
++
+The implicit compcls:sink.text.pretty component exists by default. If
+any other explicit or implicit sink component exists, the `convert`
+command does not automatically create the implicit
+compcls:sink.text.pretty component.
++
+The opt:--clock-cycles, opt:--clock-date, opt:--clock-gmt,
+opt:--clock-seconds, opt:--color, opt:--fields, opt:--names, and
+opt:--no-delta options all apply to the implicit
+compcls:sink.text.pretty component.
++
+The opt:--output option without opt:--output-format=`ctf` makes the
+implicit compcls:sink.text.pretty component write its content to a file,
+except the warnings for backward compatibility with the
+man:babeltrace(1) program.
++
+Examples:
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace
+----
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --no-delta
+----
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --output=/tmp/pretty-out
+----
+
+* To create an implicit compcls:sink.utils.dummy component (no output),
+  specify the opt:--output-format=`dummy` option.
++
+Example:
++
+[role="term"]
+----
+$ babeltrace2 /path/to/trace --output-format=dummy
+----
+
+* To create an implicit compcls:sink.ctf.fs component (CTF traces
+  written to the file system), specify the opt:--output-format=`ctf`
+  and the opt:--output='DIR' (base output directory) options.
++
+Example:
++
+[role="term"]
+----
+$ babeltrace2 /path/to/input/trace --output-format=ctf \
+              --output=my-traces
+----
+
+You can combine multiple methods to create multiple implicit components.
+For example, you can trim an LTTng (CTF) trace, add debugging
+information to it, and write it as another CTF trace:
+
+[role="term"]
+----
+$ babeltrace2 /path/to/input/trace --timerange=22:14:38,22:15:07 \
+              --debug-info --output-format=ctf --output=out-dir
+----
+
+The equivalent man:babeltrace2-run(1) command of this `convert` command
+is:
+
+[role="term"]
+----
+$ babeltrace2 run --component=auto-disc-source-ctf-fs:source.ctf.fs \
+                  --params='inputs=["/path/to/input/trace"]' \
+                  --component=sink-ctf-fs:sink.ctf.fs \
+                  --params='path="out-dir"' \
+                  --component=muxer:filter.utils.muxer \
+                  --component=trimmer:filter.utils.trimmer \
+                  --params='begin="22:14:38"' \
+                  --params='end="22:15:07"' \
+                  --component=debug-info:filter.lttng-utils.debug-info \
+                  --connect=auto-disc-source-ctf-fs:muxer \
+                  --connect=muxer:trimmer \
+                  --connect=trimmer:debug-info \
+                  --connect=debug-info:sink-ctf-fs
+----
+
+The order of the implicit component options documented in this
+subsection is not significant.
+
+See <<examples,``EXAMPLES''>> for more examples.
+
+
+== OPTIONS
+
+include::common-gen-options.txt[]
+
+
+=== Explicit component creation
+
+See <<comp-create-expl,``Create explicit components''>> to learn how to
+use the following option.
+
+opt:-c $$[$$__NAME__:]'COMP-CLS-TYPE'.'PLUGIN-NAME'.'COMP-CLS-NAME'::
+opt:--component=$$[$$__NAME__:]'COMP-CLS-TYPE'.'PLUGIN-NAME'.'COMP-CLS-NAME'::
+    Create a component named 'NAME' (if specified) from the component
+    class of type 'COMP-CLS-TYPE' named 'COMP-CLS-NAME' found in the
+    plugin named 'PLUGIN-NAME', and set it as the current component.
++
+The available values for 'COMP-CLS-TYPE' are:
++
+--
+`source`::
+`src`::
+    Source component class.
+
+`filter`::
+`flt`::
+    Filter component class.
+
+`sink`::
+    Sink component class.
+--
+
+
+=== Common component creation
+
+See <<comp-create-expl,``Create explicit components''>> and
+<<comp-create-impl-non-opt,``Create implicit components from non-option
+arguments''>> to learn how to use the following options.
+
+The following options apply to either the current explicit component
+(last opt:--component option) or to :all: the implicit components
+created from the last non-option argument.
+
+opt:-l 'LVL'::
+opt:--log-level='LVL'::
+    Set the log level of the current component(s) to 'LVL'.
++
+The available values for 'LVL' are:
++
+--
+include::common-log-levels.txt[]
+--
+
+opt:-p 'PARAMS'::
+opt:--params='PARAMS'::
+    Add 'PARAMS' to the initialization parameters of the current
+    component(s).
++
+If 'PARAMS' contains a key which exists in the initialization parameters
+of the current component(s), replace the parameter.
++
+--
+include::common-cmd-params-format.txt[]
+--
+
+
+=== Legacy options to create implicit components
+
+opt:-i 'FORMAT'::
+opt:--input-format='FORMAT'::
+    Force the `convert` command to create components from a specific
+    component class for non-option arguments (see
+    <<comp-create-impl-non-opt,``Create implicit components from
+    non-option arguments''>>), or list available remote LTTng tracing
+    sessions.
++
+The available values for 'FORMAT' are:
++
+--
+`ctf`::
+    Use the compcls:source.ctf.fs component class.
++
+Each non-option argument of the command line is a CTF trace or CTF
+trace chunk.
++
+See man:babeltrace2-source.ctf.fs(7) to learn more about this
+component class.
+
+`lttng-live`::
+    Depending on the format of the first non-option argument:
++
+--
+`net[4]://RDHOST[:RDPORT]`::
+    List the available remote LTTng tracing sessions for the LTTng relay
+    daemon at the address `RDHOST` and port `RDPORT` ({defrdport} if not
+    specified), and then exit.
+
+`net[4]://RDHOST[:RDPORT]/host/TGTHOST/SESSION`::
+    Use the compcls:source.ctf.lttng-live component class.
++
+See man:babeltrace2-source.ctf.lttng-live(7) to learn more about this
+component class and the URL format.
+--
+--
++
+You can specify at most one opt:--input-format option.
+
+opt:-o 'FORMAT', opt:--output-format='FORMAT'::
+    Create an implicit sink component with format 'FORMAT' or print
+    the metadata text of a CTF trace.
++
+The available values for 'FORMAT' are:
++
+--
+`text`::
+    Create an implicit compcls:sink.text.pretty component.
++
+See <<impl-opts-text,``Implicit compcls:sink.text.pretty component''>>.
++
+See man:babeltrace2-sink.text.pretty(7) to learn more about this
+component class.
+
+`ctf`::
+    Create an implicit compcls:sink.ctf.fs component. Specify the base
+    output path with the opt:--output option.
++
+See man:babeltrace2-sink.ctf.fs(7) to learn more about this component
+class.
+
+`dummy`::
+    Create an implicit compcls:sink.utils.dummy component.
++
+See man:babeltrace2-sink.utils.dummy(7) to learn more about this
+component class.
+
+`ctf-metadata`::
+    Print the metadata text of a CTF trace and exit.
++
+The first non-option argument specifies the path to the CTF trace.
+--
++
+You can specify at most one opt:--output-format option.
+
+
+[[impl-opts-ctf]]
+=== Implicit compcls:source.ctf.fs component(s)
+
+See man:babeltrace2-source.ctf.fs(7) to learn more about this component
+class.
+
+opt:--clock-force-correlate::
+    Set the manparam:source.ctf.fs:force-clock-class-origin-unix-epoch
+    initialization parameter of all the implicit compcls:source.ctf.fs
+    components to true.
++
+The manparam:source.ctf.fs:force-clock-class-origin-unix-epoch
+initialization parameter makes all the created clock classes have a Unix
+epoch origin. This is useful to force the clock classes of multiple
+traces to be compatible even if they are not inherently.
+
+opt:--clock-offset='SEC'::
+    Set the manparam:source.ctf.fs:clock-class-offset-s initialization
+    parameter of all the implicit compcls:source.ctf.fs components to
+    'SEC'.
++
+The manparam:source.ctf.fs:clock-class-offset-s initialization parameter
+adds 'SEC' seconds to the offsets of all the clock classes that the
+component creates.
++
+You can combine this option with opt:--clock-offset-ns.
+
+opt:--clock-offset-ns='NS'::
+    Set the manparam:source.ctf.fs:clock-class-offset-ns initialization
+    parameter of all the implicit compcls:source.ctf.fs components to
+    'NS'.
++
+The manparam:source.ctf.fs:clock-class-offset-ns initialization
+parameter adds 'NS' nanoseconds to the offsets of all the clock classes
+that the component creates.
++
+You can combine this option with opt:--clock-offset-s.
+
+
+=== Implicit compcls:filter.utils.trimmer component
+
+If you specify at least one of the following options, you create an
+implicit compcls:filter.utils.trimmer component.
+
+See man:babeltrace2-filter.utils.trimmer(7) to learn more about
+this component class.
+
+opt:--begin='TIME'::
+    Set the manparam:filter.utils.trimmer:begin initialization parameter
+    of the component to 'TIME'.
++
+You cannot use this option with the opt:--timerange option.
++
+The format of 'TIME' is one of:
++
+--
+include::common-trimmer-time-format.txt[]
+--
+
+opt:--end='TIME'::
+    Set the manparam:filter.utils.trimmer:end initialization parameter
+    of the component to 'TIME'.
++
+You cannot use this option with the opt:--timerange option.
++
+See the opt:--begin option for the format of 'TIME'.
+
+opt:--timerange='BEGIN','END'::
+    Equivalent to opt:--begin='BEGIN' and opt:--end='END'.
++
+You can also surround the whole argument with `[` and `]`.
+
+
+=== Implicit compcls:filter.lttng-utils.debug-info component
+
+If you specify at least one of the following options, you create an
+implicit compcls:filter.lttng-utils.debug-info component. This component
+only alters compatible LTTng events.
+
+See man:babeltrace2-filter.lttng-utils.debug-info(7) to learn more about
+this component class.
+
+opt:--debug-info::
+    Create an implicit compcls:filter.lttng-utils.debug-info component.
++
+This option is useless if you specify any of the options below.
+
+opt:--debug-info-dir='DIR'::
+    Set the manparam:filter.lttng-utils.debug-info:debug-info-dir
+    initialization parameter of the component to 'DIR'.
++
+The manparam:filter.lttng-utils.debug-info:debug-info-dir parameter
+indicates where the component should find the debugging information it
+needs if it's not found in the actual executable files.
+
+opt:--debug-info-full-path::
+    Set the manparam:filter.lttng-utils.debug-info:full-path
+    initialization parameter of the component to true.
++
+When the manparam:filter.lttng-utils.debug-info:full-path parameter is
+true, the component writes the full (absolute) paths to files in its
+debugging information fields instead of just the short names.
+
+opt:--debug-info-target-prefix='PREFIX'::
+    Set the manparam:filter.lttng-utils.debug-info:target-prefix
+    initialization parameter of the component to 'PREFIX'.
++
+The manparam:filter.lttng-utils.debug-info:target-prefix parameter is a
+path to prepend to the paths to executables recorded in the trace. For
+example, if a trace contains the executable path `/usr/bin/ls` in its
+state dump events, and you specify
+opt:--debug-info-target-prefix=`/home/user/boards/xyz/root`, then the
+component opens the `/home/user/boards/xyz/root/usr/bin/ls` file to find
+debugging information.
+
+
+[[impl-opts-text]]
+=== Implicit compcls:sink.text.pretty component
+
+If you specify at least one of the following options, you force the
+`convert` command's sink component to be an implicit
+compcls:sink.text.pretty component.
+
+See man:babeltrace2-sink.text.pretty(7) to learn more about this
+component class.
+
+opt:--clock-cycles::
+    Set the manparam:sink.text.pretty:clock-seconds initialization
+    parameter of the component to true.
++
+The manparam:sink.text.pretty:clock-cycles parameter makes the component
+print the event time in clock cycles.
+
+opt:--clock-date::
+    Set the manparam:sink.text.pretty:clock-date initialization
+    parameter of the component to true.
++
+The manparam:sink.text.pretty:clock-date parameter makes the component
+print the date and the time of events.
+
+opt:--clock-gmt::
+    Set the manparam:sink.text.pretty:clock-gmt initialization parameter
+    of the component to true.
++
+The manparam:sink.text.pretty:clock-gmt parameter makes the component
+not apply the local timezone to the printed times.
+
+opt:--clock-seconds::
+    Set the manparam:sink.text.pretty:clock-seconds initialization
+    parameter of the component to true.
++
+The manparam:sink.text.pretty:clock-seconds parameter makes the
+component print the event times in seconds since the Unix epoch.
+
+opt:--color='WHEN'::
+    Set the manparam:sink.text.pretty:color initialization parameter of
+    the component to 'WHEN'.
++
+The available values for 'WHEN' are:
++
+--
+`auto`::
+    Only emit terminal color codes when the standard output and error
+    streams are connected to a color-capable terminal.
+
+`never`::
+    Never emit terminal color codes.
+
+`always`::
+    Always emit terminal color codes.
+--
++
+The `auto` and `always` values have no effect if the
+`BABELTRACE_TERM_COLOR` environment variable is set to `NEVER`.
+
+opt:--fields='FIELD'[,'FIELD']...::
+    For each 'FIELD', set the nlparam:field-FIELD initialization
+    parameter of the component to true.
++
+For example, opt:--fields=`trace,loglevel,emf` sets the
+manparam:sink.text.pretty:field-trace,
+manparam:sink.text.pretty:field-loglevel, and
+manparam:sink.text.pretty:field-emf initialization parameters to true.
++
+The available value for 'FIELD' are:
++
+* `trace`
+* `trace:hostname`
+* `trace:domain`
+* `trace:procname`
+* `trace:vpid`
+* `loglevel`
+* `emf`
+* `callsite`
+
+opt:--names='NAME'[,'NAME']...::
+    For each 'NAME', set the nlparam:name-NAME initialization parameter
+    of the component to true.
++
+For example, opt:--names=`payload,scope` sets the
+manparam:sink.text.pretty:name-payload and
+manparam:sink.text.pretty:name-scope initialization parameters to true.
++
+The available value for 'NAME' are:
++
+* `payload`
+* `context`
+* `scope`
+* `header`
+
+opt:--no-delta::
+    Set the manparam:sink.text.pretty:no-delta initialization parameter
+    of the component to true.
++
+When the manparam:sink.text.pretty:no-delta parameter is true, the
+component does not print the duration since the last event on the line.
+
+
+=== Shared options
+
+opt:-w 'PATH'::
+opt:--output='PATH'::
+    With opt:--output-format=`ctf-metadata` or
+    opt:--input-format=`lttng-live` (when printing the available remote
+    LTTng tracing sessions), write the text to the file 'PATH' instead
+    of the standard output.
++
+When you specify opt:--output-format=`ctf`, set the
+manparam:sink.ctf.fs:path initialization parameter of the implicit
+compcls:sink.ctf.fs component to 'PATH'.
++
+Without any specified sink component, explicit or implicit, force the
+`convert` command's sink component to be an implicit
+compcls:sink.text.pretty component and set its
+manparam:sink.text.pretty:path initialization parameter to 'PATH'.
++
+See man:babeltrace2-sink.ctf.fs(7) and
+man:babeltrace2-sink.text.pretty(7) to learn more about those component
+classes.
+
+
+=== Equivalent `babeltrace2 run` arguments
+
+opt:--run-args::
+    Print the equivalent man:babeltrace2-run(1) arguments instead of
+    creating and running the conversion graph.
++
+The printed arguments are space-separated and individually escaped for
+safe shell input.
++
+You cannot use this option with the opt:--run-args-0 or
+opt:--stream-intersection option.
+
+opt:--run-args-0::
+    Print the equivalent man:babeltrace2-run(1) arguments instead of
+    creating and running the conversion graph.
++
+The printed arguments are separated with a null character and :not:
+escaped for safe shell input.
++
+You cannot use this option with the opt:--run-args or
+opt:--stream-intersection option.
+
+
+=== Conversion graph configuration
+
+opt:--retry-duration='TIME-US'::
+    Set the duration of a single retry to 'TIME-US'~µs when a sink
+    component reports "try again later" (busy network or file system,
+    for example).
++
+Default: 100000 (100~ms).
+
+opt:--stream-intersection::
+    Enable the stream intersection mode.
++
+In this mode, for each trace, the `convert` command filters out the
+events and other messages which are not in the time range where _all_
+the trace's streams are active.
++
+To use this option, all the source components, explicit and implicit,
+must have classes which support the `babeltrace.trace-infos` query
+object (see man:babeltrace2-query-babeltrace.trace-infos(7)). The only
+Babeltrace~2 project's component class which supports this query
+object is compcls:source.ctf.fs.
++
+You cannot use this option with the opt:--run-args or opt:--run-args-0
+option.
+
+=== Other legacy options
+
+The following options exist for backward compatibility with the
+man:babeltrace(1) program.
+
+opt:-d::
+opt:--debug::
+    Legacy option: this is equivalent to nlopt:--log-level=`TRACE`,
+    where nlopt:--log-level is the general option (not this command's
+    opt:--log-level option).
+
+opt:-v::
+opt:--verbose::
+    Legacy option: this is equivalent to nlopt:--log-level=`INFO`, where
+    nlopt:--log-level is the general option (not this command's
+    opt:--log-level option).
++
+This option also sets the manparam:sink.text.pretty:verbose parameter of
+the implicit compcls:sink.text.pretty component (see
+man:babeltrace2-sink.text.pretty(7)) to true.
+
+include::common-cmd-info-options.txt[]
+
+
+[[examples]]
+== EXAMPLES
+
+include::common-convert-examples.txt[]
+
+
+include::common-cli-env.txt[]
+
+
+include::common-cli-files.txt[]
+
+
+include::common-cmd-footer.txt[]
+
+
+== SEE ALSO
+
+man:babeltrace2-intro(7),
+man:babeltrace2(1),
+man:babeltrace2-run(1)

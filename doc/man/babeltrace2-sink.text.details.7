@@ -1,0 +1,394 @@
+'\" t
+.\"     Title: babeltrace2-sink.text.details
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-SINK\&." "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-sink.text.details \- Babeltrace 2\*(Aqs detailed plain text sink component class
+.SH "DESCRIPTION"
+.sp
+A Babeltrace\ \&2 \fBsink.text.details\fR component deterministically prints the messages it consumes, with all the possible details, to the standard output\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+            | sink\&.text\&.details |
+            |                   +\-\-> Detailed messages to the
+Messages \-\->@ in                |    standard output
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.sp
+The purpose of a \fBsink.text.details\fR component is to always print the same text for the same sequence of consumed messages, whatever the build configuration of the Babeltrace\ \&2 project\&. This can be helpful for testing, debugging, and support\&.
+.sp
+The output format is optimized for human reading, with colors when the terminal supports it\&. You can control how the component prints color codes with the \fBcolor\fR parameter\&.
+.sp
+To achieve a reproducible output, a \fBsink.text.details\fR component sorts the members of all unordered sets before it prints them\&. For example, the component sorts enumeration field class mappings by label and, for each mapping, sorts the contained ranges\&.
+.sp
+In normal mode, each message has at least three lines, the three first being:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+Timing information (cycles and nanoseconds since origin)\&.
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+[102,423,274,041,829 cycles, 1,441,852,841,550,867,846 ns from origin]
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+Unique stream identifier\&.
+.sp
+To be able to follow a specific trace object (the name and UUID properties of a trace object are optional), the component assigns a unique numeric ID to the trace object when it first encounters it in a stream beginning message\&.
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+{Trace 1, Stream class ID 0, Stream ID 2}
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+Message type and basic information\&.
+.sp
+Examples:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Packet beginning:
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+Event `lttng_ust_statedump:build_id` (Class ID 2):
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+What follows depend on the specific message type\&. The component prints all the available properties and fields in a human\-readable, structured format\&.
+.sp
+When a \fBsink.text.details\fR component consumes a stream beginning or an event message, it can print a metadata block for all the metadata objects which it did not print yet\&. You can use the \fBwith-metadata\fR parameter to disable this\&.
+.sp
+You can hide specific properties with the \fBwith-stream-class-name\fR, \fBwith-stream-name\fR, \fBwith-time\fR, \fBwith-trace-name\fR, and \fBwith-uuid\fR parameters\&.
+.sp
+To make the component hide many message details and print a single message per line, you can enable the compact mode with the \fBcompact\fR parameter\&.
+.SH "INITIALIZATION PARAMETERS"
+.PP
+\fBcolor\fR=(\fBnever\fR | \fBauto\fR | \fBalways\fR) [optional string]
+.RS 4
+Force the terminal color support, one of:
+.PP
+\fBauto\fR (default)
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBnever\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBalways\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.sp
+The
+\fBBABELTRACE_TERM_COLOR\fR
+environment variable overrides this parameter\&.
+.RE
+.PP
+\fBcompact\fR=\fByes\fR [optional boolean]
+.RS 4
+Enable compact mode\&.
+.sp
+In compact mode, the component prints one line per message, omitting many details about messages\&. This is useful if you only need the time, type, and very basic information of messages\&.
+.sp
+In compact mode, the component still prints the full metadata blocks\&. You can remove such blocks with the
+\fBwith-metadata\fR
+parameter\&.
+.RE
+.PP
+\fBwith-metadata\fR=\fBno\fR [optional boolean]
+.RS 4
+Do not print metadata blocks\&.
+.RE
+.PP
+\fBwith-stream-class-name\fR=\fBno\fR [optional boolean]
+.RS 4
+Do not print stream class names\&.
+.RE
+.PP
+\fBwith-stream-name\fR=\fBno\fR [optional boolean]
+.RS 4
+Do not print stream names\&.
+.RE
+.PP
+\fBwith-time\fR=\fBno\fR [optional boolean]
+.RS 4
+Do not print timing information\&.
+.RE
+.PP
+\fBwith-trace-name\fR=\fBno\fR [optional boolean]
+.RS 4
+Do not print trace names\&.
+.RE
+.PP
+\fBwith-uuid\fR=\fBno\fR [optional boolean]
+.RS 4
+Do not print UUIDs\&.
+.RE
+.SH "PORTS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| sink\&.text\&.details |
+|                   |
+@ in                |
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SS "Input"
+.PP
+\fBin\fR
+.RS 4
+Single input port\&.
+.RE
+.SH "ENVIRONMENT VARIABLES"
+.PP
+\fBBABELTRACE_EXEC_ON_ABORT\fR=\fICMDLINE\fR
+.RS 4
+Execute the command line
+\fICMDLINE\fR, as parsed like a UNIX\ \&98 shell, when any part of the Babeltrace\ \&2 project unexpectedly aborts\&.
+.sp
+The application only aborts when the executed command returns, ignoring its exit status\&.
+.sp
+This environment variable is ignored when the application has the
+\fBsetuid\fR
+or the
+\fBsetgid\fR
+access right flag set\&.
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR\fR=(\fBAUTO\fR | \fBNEVER\fR | \fBALWAYS\fR)
+.RS 4
+Force the terminal color support for the
+\fBbabeltrace2\fR(1)
+program and the project\(cqs plugins\&.
+.sp
+The available values are:
+.PP
+\fBAUTO\fR
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBNEVER\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBALWAYS\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR_BRIGHT_MEANS_BOLD\fR=\fB0\fR
+.RS 4
+Set to
+\fB0\fR
+to emit
+SGR (see <https://en.wikipedia.org/wiki/ANSI_escape_code>)
+codes 90 to 97 for bright colors instead of bold (SGR code\ \&1) and standard color codes (SGR codes 30 to 37)\&.
+.RE
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This component class is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2-plugin-text\fR(7)

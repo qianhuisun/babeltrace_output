@@ -1,0 +1,456 @@
+'\" t
+.\"     Title: babeltrace2-source.ctf.fs
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-SOURCE\" "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-source.ctf.fs \- Babeltrace 2\*(Aqs file system CTF source component class
+.SH "DESCRIPTION"
+.sp
+A Babeltrace\ \&2 \fBsource.ctf.fs\fR message iterator reads one or more CTF (see <https://diamon.org/ctf/>)\ \&1\&.8 streams on the file system and emits corresponding messages\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+CTF streams on
+the file system
+  |
+  |   +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+  |   |      src\&.ctf\&.fs     |
+  |   |                     |
+  \*(Aq\-\->|    \&.\&.\&.5c847 | 0 | 0 @\-\-> Stream 0 messages
+      |    \&.\&.\&.5c847 | 0 | 1 @\-\-> Stream 1 messages
+      |    \&.\&.\&.5c847 | 0 | 2 @\-\-> Stream 2 messages
+      +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.SS "Input"
+.sp
+A \fBsource.ctf.fs\fR component opens a single \fIlogical\fR CTF trace\&. A logical CTF trace contains one or more \fIphysical\fR CTF traces\&. A physical CTF trace on the file system is a directory which contains:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+One metadata stream file named
+\fBmetadata\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+One or more data stream files, that is, any file with a name that does not start with
+\fB.\fR
+and which is not
+\fBmetadata\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBOptional\fR: One
+LTTng (see <https://lttng.org/>)
+index directory named
+\fBindex\fR\&.
+.RE
+.sp
+If the logical CTF trace to handle contains more than one physical CTF trace, then all the physical CTF traces must have a trace UUID and all UUIDs must be the same\&. Opening more than one physical CTF trace to constitute a single logical CTF trace is needed to support LTTng\(cqs tracing session rotation feature, for example (see \fBlttng-rotate\fR(1) starting from LTTng\ \&2\&.11)\&.
+.sp
+You specify which physical CTF traces to open and read with the \fBinputs\fR array parameter\&. Each entry in this array is the path to a physical CTF trace directory, that is, the directory directly containing the stream files\&.
+.sp
+A \fBsource.ctf.fs\fR component does not recurse into directories to find CTF traces\&. However, the component class provides the \fBbabeltrace.support-info\fR query object which indicates whether or not a given directory looks like a CTF trace directory (see \(lq\fBbabeltrace.support-info\fR\(rq)\&.
+.sp
+The component creates one output port for each logical CTF data stream\&. More than one physical CTF data stream file can support a single logical CTF data stream (LTTng\(cqs trace file rotation and tracing session rotation can cause this)\&.
+.sp
+If two or more data stream files contain the same packets, a \fBsource.ctf.fs\fR message iterator reads each of them only once so that it never emits duplicated messages\&. This feature makes it possible, for example, to open overlapping LTTng snapshots (see <https://lttng.org/docs/#doc-taking-a-snapshot>) with a single \fBsource.ctf.fs\fR component and silently discard the duplicated packets\&.
+.SS "Trace quirks"
+.sp
+Many tracers produce CTF traces\&. A \fBsource.ctf.fs\fR component makes some effort to support as many CTF traces as possible, even those with malformed streams\&.
+.sp
+Generally:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+If the
+\fBtimestamp_begin\fR
+or
+\fBtimestamp_end\fR
+packet context field class exists, but it is not mapped to a clock class, and there\(cqs only one clock class at this point in the metadata stream, the component maps the field class to this unique clock class\&.
+.RE
+.sp
+A \fBsource.ctf.fs\fR component has special quirk handling for some LTTng (see <https://lttng.org/>) and barectf (see <https://lttng.org/>) traces, depending on the tracer\(cqs version:
+.PP
+All LTTng versions
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The component sets the
+\fBmonotonic\fR
+clock class\(cqs origin to the Unix epoch so that different LTTng traces are always correlatable\&.
+.sp
+This is the equivalent of setting the
+\fBforce-clock-class-origin-unix-epoch\fR
+parameter to true\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+For a given data stream, for all the contiguous last packets of which the
+\fBtimestamp_end\fR
+context field is 0, the message iterator uses the packet\(cqs last event record\(cqs time as the packet end message\(cqs time\&.
+.sp
+This is useful for the traces which
+\fBlttng-crash\fR(1)
+generates\&.
+.RE
+.RE
+.PP
+LTTng\-UST up to, but excluding, 2\&.11\&.0, LTTng\-modules up to, but excluding, 2\&.9\&.13, LTTng\-modules from 2\&.10\&.0 to 2\&.10\&.9
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+For a given packet, the message iterator uses the packet\(cqs last event record\(cqs time as the packet end message\(cqs time, ignoring the packet context\(cqs
+\fBtimestamp_end\fR
+field\&.
+.RE
+.RE
+.PP
+barectf up to, but excluding, 2\&.3\&.1
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+For a given packet, the message iterator uses the packet\(cqs first event record\(cqs time as the packet beginning message\(cqs time, ignoring the packet context\(cqs
+\fBtimestamp_begin\fR
+field\&.
+.RE
+.RE
+.SH "INITIALIZATION PARAMETERS"
+.PP
+\fBclock-class-offset-ns\fR=\fINS\fR [optional signed integer]
+.RS 4
+Add
+\fINS\fR
+nanoseconds to the offset of all the clock classes that the component creates\&.
+.sp
+You can combine this parameter with the
+\fBclock-class-offset-s\fR
+parameter\&.
+.RE
+.PP
+\fBclock-class-offset-s\fR=\fISEC\fR [optional signed integer]
+.RS 4
+Add
+\fISEC\fR
+seconds to the offset of all the clock classes that the component creates\&.
+.sp
+You can combine this parameter with the
+\fBclock-class-offset-ns\fR
+parameter\&.
+.RE
+.PP
+\fBforce-clock-class-origin-unix-epoch\fR=\fByes\fR [optional boolean]
+.RS 4
+Force the origin of all clock classes that the component creates to have a Unix epoch origin, whatever the detected tracer\&.
+.RE
+.PP
+\fBinputs\fR=\fIDIRS\fR [array of strings]
+.RS 4
+Open and read the physical CTF traces located in
+\fIDIRS\fR\&.
+.sp
+Each element of
+\fIDIRS\fR
+is the path to a physical CTF trace directory containing the trace\(cqs stream files\&.
+.sp
+All the specified physical CTF traces must belong to the same logical CTF trace\&. See
+\(lqInput\(rq
+to learn more about logical and physical CTF traces\&.
+.RE
+.PP
+\fBtrace-name\fR=\fINAME\fR [optional string]
+.RS 4
+Set the name of the trace object that the component creates to
+\fINAME\fR\&.
+.RE
+.SH "PORTS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+|     src\&.ctf\&.fs     |
+|                    |
+|   \&.\&.\&.5c847 | 0 | 1 @
+|                \&.\&.\&. @
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SS "Output"
+.sp
+A \fBsource.ctf.fs\fR component creates one output port for each logical CTF data stream\&. See \(lqInput\(rq to learn more about logical and physical CTF data streams\&.
+.sp
+Each output port\(cqs name has one of the following forms:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fITRACE\-ID\fR | \fISTREAM\-CLASS\-ID\fR | \fISTREAM\-ID\fR
+\fITRACE\-ID\fR | \fISTREAM\-ID\fR
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+The component uses the second form when the stream class ID is not available\&.
+.PP
+\fITRACE\-ID\fR
+.RS 4
+Trace\(cqs UUID if available, otherwise trace\(cqs absolute directory path\&.
+.RE
+.PP
+\fISTREAM\-CLASS\-ID\fR
+.RS 4
+Stream class ID\&.
+.RE
+.PP
+\fISTREAM\-ID\fR
+.RS 4
+Stream ID if available, otherwise stream\(cqs absolute file path\&.
+.RE
+.SH "QUERY OBJECTS"
+.SS "babeltrace\&.support\-info"
+.sp
+See \fBbabeltrace2-query-babeltrace.support-info\fR(7) to learn more about this query object\&.
+.sp
+For a directory input which is the path to a CTF trace directory, the result object contains:
+.PP
+\fBweight\fR
+.RS 4
+0\&.75
+.RE
+.PP
+\fBgroup\fR
+.RS 4
+Trace\(cqs UUID if available, otherwise the entry does not exist\&.
+.RE
+.sp
+You can leverage this query object\(cqs \fBgroup\fR entry to assemble many physical CTF traces as a single logical CTF trace (see \(lqInput\(rq to learn more about logical and physical CTF traces)\&. This is how the \fBbabeltrace2-convert\fR(1) command makes it possible to specify as non\-option arguments the paths to multiple physical CTF traces which belong to the same logical CTF trace and create a single \fBsource.ctf.fs\fR component\&.
+.SS "babeltrace\&.trace\-infos"
+.sp
+See \fBbabeltrace2-query-babeltrace.trace-infos\fR(7) to learn more about this query object\&.
+.SS "metadata\-info"
+.sp
+You can query the \fBmetadata-info\fR object for a specific CTF trace to get its plain text metadata stream as well as whether or not it is packetized\&.
+.sp
+Parameters:
+.PP
+\fBpath\fR=\fIPATH\fR [string]
+.RS 4
+Path to the physical CTF trace directory which contains the
+\fBmetadata\fR
+file\&.
+.RE
+.sp
+Result object (map):
+.PP
+\fBis-packetized\fR [boolean]
+.RS 4
+True if the metadata stream file is packetized\&.
+.RE
+.PP
+\fBtext\fR [string]
+.RS 4
+Plain text metadata stream\&.
+.RE
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This component class is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2-plugin-ctf\fR(7), \fBlttng-crash\fR(1)

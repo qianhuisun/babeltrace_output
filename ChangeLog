@@ -1,0 +1,84 @@
+2020-01-22 Babeltrace 2.0.0 (National Hot Sauce Day)
+	* cli: colorize version printing
+	* cli: print full version name
+	* lib: add bt_version_get_extra_{name,description,patch_names}
+	* lib: add bt_version_get_vcs_revision_description()
+	* common: support custom, extra information for build's version
+	* configure.ac, lib: rename "extra" (version) to "development stage"
+	* lib: add bt_version_get_name() and bt_version_get_name_description()
+	* lib: bt_version_get_extra(): return `NULL` if none instead of empty str.
+	* configure.ac: add version name/description definitions and report them
+	* Document libbabeltrace2's C API
+	* Fix: src.ctf.lttng-live: emitting stream end msg with no stream
+	* lib: msg. iter. inactivity message has a simple CS, not a default CS
+	* lib: remove self component param. from msg. iterator init. method
+	* lib: graph API: return borrowed references when adding to an object
+	* lib: plugin-dev.h: rename `MESSAGE_ITERATOR` -> `MESSAGE_ITERATOR_CLASS`
+	* lib: rename "self comp. input port message iter." -> "message iterator"
+	* lib: append `_FUNC` to `BT_PLUGIN_{INITIALIZE,FINALIZE}*`
+	* Replace `diamon.org/babeltrace` with `babeltrace.org`
+	* lib: create common base for bt_component_class_{source,filter}
+	* lib: introduce bt_message_iterator_class
+	* lib: run most of bt_self_component_port_input_message_iterator_try_finalize when iterator is in NON_INITIALIZED state
+	* tests: plug memory leak in test_bin_info
+	* debug-info: free existing build-id in bin_info_set_build_id
+	* cli: free log level string value
+	* bt2: free port user data when finalizing components
+	* build: try calling python-config with --embed
+	* tests: remove unnecessary message iterator classes
+	* tests: make test_sink_self_port_user_data actually test a sink
+	* lib: remove unnecessary (void *) cast in extend_map_element
+	* cli: fix bt_plugin leak when using `-i ctf`
+	* cli: remove unused structures and enums
+	* tests: fix test failure with msys2's Python 3.8.1-1 package
+	* trimmer: free GMatchInfo object in set_bound_from_str
+	* bt2: rename `object` parameter -> `object_name`
+	* lib: remove bt_query_executor_interrupt, add bt_query_executor_borrow_default_interrupter
+	* lib: remove bt_graph_interrupt, add bt_graph_borrow_default_interrupter
+	* lib: graph API: remove "listener removed" callback parameters
+	* lib, bt2: graph API: remove "ports connected" listeners
+	* babeltrace2-plugin-ctf(7): "theirs" -> "its" (single CTF trace)
+	* .gitignore: add missing `/tests/lib/test_remove_..._destruction_listener`
+	* Sync argpar with upstream
+	* Use argpar from upstream
+	* bt2: use format_bt_error and format_bt_error_cause to generate _Error and _ErrorCause string representations
+	* string-format: introduce function to format a bt_error_cause
+	* string-format: introduce function to format a bt_error
+	* string-format: introduce function to format component class name
+	* common: introduce struct bt_common_color_codes and function bt_common_color_get_codes
+	* lib: standardize variant field option function names
+	* bt2: don't print previous causes in causes created from bt2._Error
+	* bt2: reverse order of printed causes in _Error.__str__
+	* bt2: remove ptr parameter of _Error.__init__
+	* tests: add test for list-plugins CLI command
+	* tests: test removing a destruction listener from a destruction listener
+	* tests/lib/Makefile.am: Move libbabeltrace2-common and libbabeltrace2-logging to COMMON_TEST_LDADD
+	* bt2: make _ListenerHandle not hold a strong reference on the target object
+	* bt2: fix error message in trace_class.py
+	* bt2: make Graph add listener methods return None
+	* param-parse: allow duplicate map keys
+	* bt2: validate parameters to _StreamClass.create_event_class before creating the native object
+	* bt2: add invalid parameter type test for _UserComponent._create_trace_class
+	* src.ctf.fs: sort inputs paths
+	* cli: print error causes in all error paths
+	* tests: add missing backslash in tests/Makefile.am
+	* tests: test_auto_source_discovery_grouping: remove dir_sep variable
+	* tests: silence "variable/expression in single quote" shellcheck warnings
+	* tests: quote ${BT_CTF_TRACES_PATH} in test_trace_read and test_trace_copy
+	* tests: declare and assign variables separately in test_exit_status
+	* Make some bt_param_validation_map_value_entry_descr variables static
+	* src.ctf.fs: make ctf_fs_ds_group_medops symbol hidden
+	* ctf: make ctf scanner symbols hidden
+	* param-validation: make symbols hidden
+	* python-plugin-provider: make python_state static
+	* lib: add comments to exposed but internal symbols
+	* lib: add comment to bt_plugin_so_create_all_from_static
+	* lib: make bt_object_pool symbols hidden
+	* lib: make symbols in prio-head hidden
+	* tests: add CLI query tests
+	* param-parse: use g_string_append_c instead of g_string_append_printf
+	* lib: remove bt_packet_context_field API
+	* ctf: make msg-iter not use bt_packet_context_field
+	* ctf: remove ctf_msg_iter::set_stream
+	* src.ctf.fs: fix typo in comment
+	* lib: mark bt_common_assert_failed as hidden

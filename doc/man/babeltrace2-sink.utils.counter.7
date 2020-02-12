@@ -1,0 +1,226 @@
+'\" t
+.\"     Title: babeltrace2-sink.utils.counter
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-SINK\&." "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-sink.utils.counter \- Babeltrace 2\*(Aqs message counter sink component class
+.SH "DESCRIPTION"
+.sp
+A Babeltrace\ \&2 \fBsink.utils.counter\fR component prints to the standard output the number of messages it consumes with a count for each type\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+            | sink\&.utils\&.counter |
+            |                    +\-\-> Statistics to the
+Messages \-\->@ in                 |    standard output
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.sp
+The component\(cqs output looks like this:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+        3842964 Event messages
+              4 Stream beginning messages
+              1 Stream end messages
+             18 Packet beginning messages
+             14 Packet end messages
+            189 Discarded event messages
+              0 Discarded packet messages
+              3 Message iterator inactivity messages
+        3843000 messages (TOTAL)
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+By default, a \fBsink.utils.counter\fR component prints a new block of statistics every 1000 consumed messages, whatever their types\&. You can use the \fBstep\fR parameter to override this default period\&.
+.sp
+The component always prints a block of statistics when there\(cqs no more messages to consume from its upstream message iterator and the last block was different\&.
+.sp
+By default, a \fBsink.utils.counter\fR component prints the count of messages for each type, even if this count is 0\&. You can make it hide the zero counts with the \fBhide-zero\fR parameter\&.
+.SH "INITIALIZATION PARAMETERS"
+.PP
+\fBhide-zero\fR=\fByes\fR [optional boolean]
+.RS 4
+Do not print the statistics lines where the count is zero\&.
+.RE
+.PP
+\fBstep\fR=\fISTEP\fR [optional unsigned integer]
+.RS 4
+Print a new block of statistics every
+\fISTEP\fR
+consumed messages instead of 1000\&.
+.sp
+If
+\fISTEP\fR
+is 0, then the component only prints statistics when there\(cqs no more messages to consume\&.
+.RE
+.SH "PORTS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| sink\&.utils\&.counter |
+|                    |
+@ in                 |
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SS "Input"
+.PP
+\fBin\fR
+.RS 4
+Single input port\&.
+.RE
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This component class is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2-plugin-utils\fR(7)

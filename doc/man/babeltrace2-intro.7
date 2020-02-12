@@ -1,0 +1,996 @@
+'\" t
+.\"     Title: babeltrace2-intro
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-INTRO" "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-intro \- Introduction to Babeltrace 2
+.SH "DESCRIPTION"
+.sp
+This manual page is an introduction to the Babeltrace\ \&2 project\&.
+.sp
+The \(lqWHAT IS BABELTRACE\ \&2?\(rq section describes the parts of the project and shows the major changes from Babeltrace\ \&1 to Babeltrace\ \&2 while the \(lqBABELTRACE\ \&2 CONCEPTS\(rq section defines the core concepts of Babeltrace\ \&2\&.
+.sp
+The \(lqTRACE PROCESSING GRAPH REPRESENTATION\(rq section shows how some concepts are visually represented in other Babeltrace\ \&2 manual pages\&.
+.SH "WHAT IS BABELTRACE\ \&2?"
+.sp
+Babeltrace\ \&2 is an open\-source software project of which the purpose is to process or convert traces (see <https://en.wikipedia.org/wiki/Tracing_(software)>)\&.
+.sp
+The Babeltrace\ \&2 project includes the following parts:
+.PP
+Babeltrace\ \&2 library (libbabeltrace2)
+.RS 4
+A shared library with a C API\&.
+.sp
+With libbabeltrace2, you can programmatically create
+plugins
+and
+component classes, build and run
+trace processing graphs, and more (see the
+\(lqBABELTRACE\ \&2 CONCEPTS\(rq
+section for more details about those concepts)\&.
+.sp
+All the other Babeltrace\ \&2 parts rely on this library\&.
+.RE
+.PP
+\fBbabeltrace2\fR command\-line program
+.RS 4
+A command\-line interface which uses libbabeltrace2 to load plugins, create a trace processing graph, create
+components, connect their
+ports
+correctly, and run the graph\&.
+.sp
+You can also use
+\fBbabeltrace2\fR
+to list the available plugins or to
+query
+an object from a component class\&.
+.sp
+See
+\fBbabeltrace2\fR(1)\&.
+.RE
+.PP
+Babeltrace\ \&2 Python bindings
+.RS 4
+A Python\ \&3 package (\fBbt2\fR) which offers a Pythonic interface of libbabeltrace2\&.
+.sp
+You can perform the same operations which are available in libbabeltrace2 with the Python bindings, but more conveniently and with less code\&. However, the Python bindings are less performant than libbabeltrace2\&.
+.RE
+.PP
+Babeltrace\ \&2 project\(cqs plugins
+.RS 4
+The Babeltrace\ \&2
+plugins
+shipped with the project\&.
+.sp
+Those plugins are not special in that they only rely on libbabeltrace2 and you don\(cqt need them to use libbabeltrace2,
+\fBbabeltrace2\fR(1), or the Python bindings\&. However, the project\(cqs plugins provide many widely used trace format encoders/decoders as well as common
+trace processing graph
+utilities\&.
+.sp
+The Babeltrace\ \&2 project\(cqs plugins are:
+.PP
+\fBctf\fR
+.RS 4
+Common Trace Format (see <https://diamon.org/ctf/>)
+(CTF) input/output, including the LTTng live source\&.
+.sp
+See
+\fBbabeltrace2-plugin-ctf\fR(7)\&.
+.RE
+.PP
+\fBlttng-utils\fR
+.RS 4
+Graph utilities specific to
+LTTng (see <https://lttng.org/>)
+traces\&.
+.sp
+See
+\fBbabeltrace2-plugin-lttng-utils\fR(7)\&.
+.RE
+.PP
+\fBtext\fR
+.RS 4
+Plain text input/output\&.
+.sp
+See
+\fBbabeltrace2-plugin-text\fR(7)\&.
+.RE
+.PP
+\fButils\fR
+.RS 4
+Common graph utilities (muxer, trimmer, counter, dummy sink)\&.
+.sp
+See
+\fBbabeltrace2-plugin-utils\fR(7)\&.
+.RE
+.RE
+.SS "Changes since Babeltrace\ \&1"
+.sp
+This manual page is an introduction to Babeltrace\ \&2, a rewrite of Babeltrace\ \&1 with a focus on extensibility, flexibility, and interoperability\&.
+.sp
+Babeltrace\ \&1 exists since 2010\&.
+.sp
+You can install both projects on the same file system as there are no file name conflicts\&.
+.sp
+The major improvements brought by Babeltrace\ \&2 are:
+.PP
+General
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Full
+plugin
+support: any user can distribute a Babeltrace\ \&2 plugin and, as long as
+libbabeltrace2
+finds it, any application linked to libbabeltrace2 can load it and use it\&.
+.sp
+Plugins are not just trace format encoders and decoders: they package source, filter, and sink
+component classes
+so that you can connect specialized, reusable
+components
+together in a
+trace processing graph
+to create a customized trace conversion or analysis device\&.
+.sp
+This modular strategy is much like how the
+FFmpeg (see <https://www.ffmpeg.org/>),
+GStreamer (see <https://gstreamer.freedesktop.org/>), and
+DirectShow (see <https://en.wikipedia.org/wiki/DirectShow>)
+projects approach media stream processing\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+All the parts of the Babeltrace\ \&2 project run on the major operating systems, including Windows and macOS\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Some
+component classes, such as
+\fBsink.text.pretty\fR
+(similar to the
+\fBtext\fR
+output format of
+\fBbabeltrace\fR(1)) and
+\fBsink.text.details\fR, can write color codes to the standard output when it\(cqs connected to a color\-enabled terminal\&.
+.sp
+The Babeltrace\ \&2 log, printed to the standard output, can also be colorized\&.
+.RE
+.RE
+.PP
+Command\-line interface
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Whereas you can convert traces from one format to another with Babeltrace\ \&1\(cqs CLI tool,
+\fBbabeltrace\fR(1), you can also execute a custom trace manipulation task with
+\fBbabeltrace2\fR(1)
+thanks to the
+\fBbabeltrace2-run\fR(1)
+command\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The
+\fBbabeltrace2-convert\fR(1)
+command features an automatic source component discovery algorithm to find the best suited components to create for a given non\-option argument (file or directory path, or custom string like an
+LTTng live (see <https://lttng.org>)
+URL)\&.
+.sp
+For example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/ctf/trace
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 net://localhost/host/myhost/my\-session
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.RE
+.PP
+CTF (see <https://diamon.org/ctf/>) input/output
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The
+\fBsource.ctf.fs\fR
+component class, which is more or less the equivalent of Babeltrace\ \&1\(cqs
+\fBctf\fR
+input format, has features not found in Babeltrace\ \&1:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The component handles many trace quirks which are the results of known tracer bugs and corner cases (LTTng\-UST, LTTng\-modules, and
+barectf (see <https://github.com/efficios/barectf>)), making it possible to decode malformed packets\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The component merges CTF traces sharing the same UUID into a single, logical trace\&.
+.sp
+This feature supports LTTng\ \&2\&.11\(cqs tracing session rotation trace chunks\&.
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+With a
+\fBsink.ctf.fs\fR
+component, you can create CTF traces on the file system\&.
+.sp
+With
+\fBbabeltrace2\fR(1), you can use the
+\fB--output-format=ctf\fR
+and
+\fB--output\fR
+options to create an implicit
+\fBsink.ctf.fs\fR
+component\&.
+.sp
+For example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 /path/to/input/trace \e
+              \-\-output\-format=ctf \-\-output=trace\-dir
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.RE
+.PP
+LTTng live (see <https://lttng.org>) input
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The
+\fBbabeltrace\fR(1)
+command exits successfully when it cannot find an LTTng live (\fB--input-format=lttng-live\fR
+option) tracing session\&.
+.sp
+The
+\fBsession-not-found-action\fR
+initialization parameter controls what a
+\fBsource.ctf.lttng-live\fR
+message iterator
+does when it cannot find the remote tracing session\&.
+.sp
+If the action is
+\fBend\fR, the message iterator does like
+\fBbabeltrace\fR(1)
+and simply ends successfully\&.
+.sp
+If the action is
+\fBcontinue\fR
+(the default), the message iterator never ends: it keeps on trying until the tracing session exists, indeed subscribing to the session\&.
+.RE
+.RE
+.PP
+Library
+.RS 4
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+libbabeltrace2
+shares nothing with libbabeltrace\&.
+.sp
+The Babeltrace\ \&2 library C API has features such as:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A single header file\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Function precondition and postcondition checking\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Object\-oriented model with shared and unique objects\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Strict C typing and
+\fBconst\fR
+correctness\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+User\-extensible classes\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Rich, thread\-safe error reporting\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Per\-component
+and per\-subsystem logging levels\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Trace intermediate representation (IR) objects to make the API trace\-format\-agnostic\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+A versioned protocol for message interchange between components to enable forward and backward compatibility\&.
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+You can build the library in developer mode to enable an extensive set of function precondition and postcondition checks\&.
+.sp
+The developer mode can help detect programming errors early when you develop a Babeltrace\ \&2
+plugin
+or an application using libbabeltrace2\&.
+.sp
+See the project\(cqs
+\fBREADME\fR
+for build\-time requirements and detailed build instructions\&.
+.RE
+.RE
+.SH "BABELTRACE\ \&2 CONCEPTS"
+.sp
+This section defines the main concepts of the Babeltrace\ \&2 project\&.
+.sp
+These concepts translate into types and functions in libbabeltrace2 and its Python bindings, but also as command\-line actions and options in the \fBbabeltrace2\fR program\&. The other Babeltrace\ \&2 manual pages assume that you are familiar with the following definitions\&.
+.sp
+Some Babeltrace\ \&2 concepts are interdependent: it is normal to jump from one definition to another to understand the big picture\&.
+.PP
+Component class
+.RS 4
+A reusable class which you can instantiate as one or more
+components
+within a
+trace processing graph\&.
+.sp
+There are three types of component classes used to create the three types of components: source, filter, and sink\&.
+.sp
+A component class implements methods, one of which is an initialization method, or constructor, to create a component\&. You pass
+\fIinitialization parameters\fR
+to this method to customize the created component\&. For example, the initialization method of the
+\fBsource.ctf.fs\fR
+component class accepts a mandatory
+\fBinputs\fR
+parameter which is an array of file system path(s) to the CTF trace(s)\&. It also accepts an optional
+\fBclock-class-offset-ns\fR
+parameter which is an offset, in nanoseconds, to add to all the clock classes (descriptors of stream clocks) found in the traces\(cqs metadata\&.
+.sp
+A component class can have a description and a help text\&.
+.RE
+.PP
+Component
+.RS 4
+A node within a
+trace processing graph\&.
+.sp
+There are three types of components:
+.PP
+Source component
+.RS 4
+An input component which produces
+messages\&.
+.sp
+Examples: CTF files input, log file input, LTTng live input, random event generator\&.
+.RE
+.PP
+Filter component
+.RS 4
+An intermediate component which can transform the messages it consumes, augment them, sort them, discard them, or create new ones\&.
+.sp
+Examples: filter which removes messages based on an expression, filter which adds debugging information to selected events, message muxer, trace trimmer\&.
+.RE
+.PP
+Sink component
+.RS 4
+An output component which consumes messages and usually writes them to one or more formatted files\&.
+.sp
+Examples: log file output, CTF files output, pretty\-printed plain text output\&.
+.RE
+.sp
+Components are connected together within a
+trace processing graph
+through their
+ports\&. Source components have output ports, sink components have input ports, and filter components have both\&.
+.sp
+A component is the instance of a
+component class\&. The terms
+\fIcomponent\fR
+and
+\fIcomponent class instance\fR
+are equivalent\&.
+.sp
+Within a trace processing graph, each component has a unique name\&. This is not the name of its component class, but an instance name\&. If
+\fBhuman\fR
+is a component class name, than
+\fBNancy\fR
+and
+\fBJohn\fR
+could be component names\&.
+.sp
+Once a
+graph
+is configured (the first time it runs), you cannot add components to it for the remaining graph\(cqs lifetime\&.
+.RE
+.PP
+Port
+.RS 4
+A connection point, on a
+component, from which are sent or where are received
+messages
+when the
+trace processing graph
+runs\&.
+.sp
+An output port is from where messages are sent\&. An input port is where messages are received\&. Source components have output ports, sink components have input ports, and filter components have both\&.
+.sp
+You can only connect an output port to a single input port\&.
+.sp
+All ports do not need to be connected\&.
+.sp
+A filter or sink component receiving messages from its input ports is said to
+\fIconsume\fR
+messages\&.
+.sp
+The link between an output port and input port is a
+connection\&.
+.sp
+Once a
+graph
+is configured (the first time it runs), you cannot connect ports for the remaining graph\(cqs lifetime\&.
+.RE
+.PP
+Connection
+.RS 4
+The link between an output
+port
+and an input port through which
+messages
+flow when a
+trace processing graph
+runs\&.
+.RE
+.PP
+Message iterator
+.RS 4
+An iterator on an input
+port
+of which the returned elements are
+messages\&.
+.sp
+A
+component
+or another message iterator can create many message iterators on a single input port, before or while the
+trace processing graph
+runs\&.
+.RE
+.PP
+Message
+.RS 4
+The element of a
+message iterator\&.
+.sp
+Messages flow from output
+ports
+to input ports\&.
+.sp
+A source
+component
+message iterator
+produces messages, while a sink component consumes them\&. A filter component message iterator can both consume and produce messages\&.
+.sp
+The main types of messages are:
+.PP
+Event
+.RS 4
+A trace event record within a packet or within a stream\&.
+.RE
+.PP
+Packet beginning
+.RS 4
+The beginning of a packet within a stream\&.
+.sp
+A packet is a conceptual container of events\&.
+.RE
+.PP
+Packet end
+.RS 4
+The end of a packet within a stream\&.
+.RE
+.PP
+Stream beginning
+.RS 4
+The beginning of a stream\&.
+.sp
+A stream is a conceptual container of packets and/or events\&.
+.sp
+Usually, a given source component\(cqs output port sends packet and event messages which belong to a single stream, but it\(cqs not required\&.
+.RE
+.PP
+Stream end
+.RS 4
+The end of a stream\&.
+.RE
+.PP
+Discarded events
+.RS 4
+A count of discarded events within a given time interval for a given stream\&.
+.RE
+.PP
+Discarded packets
+.RS 4
+A count of discarded packets within a given time interval for a given stream\&.
+.RE
+.RE
+.PP
+Trace processing graph
+.RS 4
+A
+filter graph (see <https://en.wikipedia.org/wiki/Filter_graph>)
+where nodes are
+components
+and
+messages
+flow from output
+ports
+to input ports\&.
+.sp
+You can build a trace processing graph with
+libbabeltrace2, with the
+Babeltrace\ \&2 Python bindings, or with the
+\fBbabeltrace2-run\fR(1)
+and
+\fBbabeltrace2-convert\fR(1)
+CLI commands\&.
+.sp
+When a trace processing graph
+\fIruns\fR, the sink components consume messages from their input ports, making all the graph\(cqs
+message iterators
+work one message at a time to perform the trace conversion or analysis duty\&.
+.RE
+.PP
+Plugin
+.RS 4
+A container, or package, of
+component classes
+as a shared library or Python module\&.
+.sp
+Each component class within a plugin has a type (source, filter, or sink) and a name\&. The type and name pair is unique within a given plugin\&.
+.sp
+libbabeltrace2
+can load a plugin (\fB.so\fR,
+\fB.dll\fR, or
+\fB.py\fR
+file) at run time: the result is a plugin object in which you can find a specific component class and instantiate it within a
+trace processing graph
+as a
+component\&.
+.sp
+The
+\fBbabeltrace2\fR program
+uses the
+\fICOMP\-CLS\-TYPE\&.PLUGIN\-NAME\&.COMP\-CLS\-NAME\fR
+format to identify a specific component class within a specific plugin\&.
+\fICOMP\-CLS\-TYPE\fR
+is either
+\fBsource\fR
+(or
+\fBsrc\fR),
+\fBfilter\fR
+(or
+\fBflt\fR), or
+\fBsink\fR\&.
+.sp
+You can list the available Babeltrace\ \&2 plugins with the
+\fBbabeltrace2-list-plugins\fR(1)
+command\&.
+.RE
+.PP
+Query
+.RS 4
+An operation with which you can get a named object from a
+component class, possibly with custom query parameters\&.
+.sp
+The plain text metadata stream of a CTF trace and the available LTTng live sessions of a given LTTng relay daemon are examples of query objects\&.
+.sp
+You can use
+libbabeltrace2, the
+Babeltrace\ \&2 Python bindings, or the
+\fBbabeltrace2-query\fR(1)
+CLI command to query a component class\(cqs object\&.
+.RE
+.SH "TRACE PROCESSING GRAPH REPRESENTATION"
+.sp
+In the Babeltrace\ \&2 manual pages, a component is represented with a box\&. The box has the component class type, plugin name, and component class name at the top\&. Just below, between square brackets, is its component name within the trace processing graph\&. Each port is represented with an \fB@\fR symbol on the border(s) of the component box with its name inside the box\&. Output ports are on the box\(cqs right border while input ports are on the box\(cqs left border\&.
+.sp
+For example, here\(cqs a source component box:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-+
+| src\&.ctf\&.fs |
+|  [my\-src]  |
+|            |
+|    stream0 @
+|    stream1 @
+|    stream2 @
++\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+This one is an instance of the \fBsource.ctf.fs\fR component class named \fBmy-src\fR\&. It has three output ports named \fBstream0\fR, \fBstream1\fR, and \fBstream2\fR\&.
+.sp
+A trace processing graph is represented with multiple component boxes connected together\&. The connections are arrows from output ports to input ports\&.
+.sp
+For example, here\(cqs a simple conversion graph:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| src\&.ctf\&.fs |    | flt\&.utils\&.muxer |    | sink\&.text\&.pretty |
+|    [ctf]   |    |     [muxer]     |    |      [text]      |
+|            |    |                 |    |                  |
+|    stream0 @\-\-\->@ in0         out @\-\-\->@ in               |
+|    stream1 @\-\-\->@ in1             |    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+|    stream2 @\-\-\->@ in2             |
++\-\-\-\-\-\-\-\-\-\-\-\-+    @ in3             |
+                  +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Note that input port \fBin3\fR of component \fBmuxer\fR is not connected in this example\&.
+.sp
+Sometimes, we symbolically represent other resources which are consumed from or produced by components\&. In this case, arrows are used, but they do not go to or from port symbols (\fB@\fR), except for messages\&. For example, in the graph above, the \fBctf\fR source component consumes a CTF trace and the \fBtext\fR sink component prints plain text to the terminal, so here\(cqs a more complete diagram:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+CTF trace
+  |
+  |   +\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+  |   | src\&.ctf\&.fs |    | flt\&.utils\&.muxer |    | sink\&.text\&.pretty |
+  \*(Aq\-\->|    [ctf]   |    |     [muxer]     |    |      [text]      |
+      |            |    |                 |    |                  |
+      |    stream0 @\-\-\->@ in0         out @\-\-\->@ in               |
+      |    stream1 @\-\-\->@ in1             |    +\-\-\-\-\-+\-\-\-\-\-\-\-\-\-\-\-\-+
+      |    stream2 @\-\-\->@ in2             |          |
+      +\-\-\-\-\-\-\-\-\-\-\-\-+    @ in3             |          \*(Aq\-\-> Terminal
+                        +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Here\(cqs another example of a more complex graph which splits a specific stream using some criteria:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| src\&.ctf\&.fs |    | flt\&.utils\&.muxer |    | sink\&.text\&.pretty |
+|  [ctf\-in]  |    |     [muxer]     |    |      [text]      |
+|            |    |                 |    |                  |
+|    stream0 @\-\-\->@ in0         out @\-\-\->@ in               |
+|    stream1 @\-\-\->@ in1             |    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+|    stream2 @\-\&.  @ in2             |
++\-\-\-\-\-\-\-\-\-\-\-\-+ |  +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+      +\-\-\-\-\-\-\-\-\-\-\-\-\-+
+               |                           | sink\&.ctf\&.fs |
+               |                           |  [ctf\-out0] |
+               |  +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    |             |
+               |  | flt\&.some\&.splitter | \&.\->@ in          |
+               |  |     [splitter]    | |  +\-\-\-\-\-\-\-\-\-\-\-\-\-+
+               |  |                   | |
+               \*(Aq\->@ in              A @\-\*(Aq  +\-\-\-\-\-\-\-\-\-\-\-\-\-+
+                  |                 B @\-\&.  | sink\&.ctf\&.fs |
+                  +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+ |  |  [ctf\-out1] |
+                                        |  |             |
+                                        \*(Aq\->@ in          |
+                                           +\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This manual page is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2\fR(1)

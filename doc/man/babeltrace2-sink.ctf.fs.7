@@ -1,0 +1,621 @@
+'\" t
+.\"     Title: babeltrace2-sink.ctf.fs
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-SINK\&." "7" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-sink.ctf.fs \- Babeltrace 2\*(Aqs file system CTF sink component class
+.SH "DESCRIPTION"
+.sp
+A Babeltrace\ \&2 \fBsink.ctf.fs\fR component writes the messages it consumes to one or more CTF (see <https://diamon.org/ctf/>)\ \&1\&.8 traces on the file system\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-+
+            | sink\&.ctf\&.fs |
+            |             +\-\-> CTF trace(s) on
+Messages \-\->@ in          |    the file system
+            +\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.sp
+A \fBsink.ctf.fs\fR component does not merge traces: it writes the messages of different input traces to different output traces\&.
+.SS "Special trace IR to CTF translations"
+.sp
+A \fBsink.ctf.fs\fR component makes a best effort to write CTF traces that are semantically equivalent to the input traces\&. As of this version, the component writes CTF\ \&1\&.8 traces, so the following field class translations can occur:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The component translates a boolean field class to a CTF unsigned 8\-bit integer field class\&.
+.sp
+The unsigned integer field\(cqs value is 0 when the boolean field\(cqs value is false and 1 when the boolean field\(cqs value is true\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The component translates a bit array field to a CTF unsigned integer field class having the same length\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The component translates an option field class to a CTF variant field class where the options are an empty structure field class and the optional field class itself\&.
+.sp
+The empty structure field is selected when the option field has no field\&.
+.RE
+.sp
+In all the cases above, the component adds a comment in the metadata stream, above the field class, to indicate that a special translation occured\&.
+.SS "Input message constraints"
+.sp
+Because of limitations in CTF\ \&1\&.8 regarding how discarded events and packets are encoded:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+If a stream class supports discarded events and the
+\fBignore-discarded-events\fR
+parameter is NOT true:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The stream class must support packets\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Discarded events messages must have times\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Any discarded events message must occur between a packet end and a packet beginning message\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The beginning time of a discarded events message must be the same as the time of the last packet end message\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The end time of a discarded events message must be the same as the time of the next packet end message\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Time ranges of discarded events messages must not overlap\&.
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+If a stream class supports discarded packets and the
+\fBignore-discarded-packets\fR
+parameter is NOT true:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The stream class must support packets\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Discarded packets messages must have times\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The beginning time of a discarded events message must be the same as the time of the last packet end message\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The end time of a discarded events message must be the same as the time of the next packet beginning message\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Time ranges of discarded packets messages must not overlap\&.
+.RE
+.RE
+.sp
+The messages which a \fBsource.ctf.fs\fR component creates satisfy all the requirements above\&.
+.sp
+If a discarded events or packets message has no events/packets count, the \fBsink.ctf.fs\fR component adds 1 to the corresponding CTF stream\(cqs counter\&.
+.SS "Alignment and byte order"
+.sp
+A \fBsink.ctf.fs\fR component always aligns data fields as such:
+.PP
+Integer fields with a size which is not a multiple of 8
+.RS 4
+1\-bit\&.
+.RE
+.PP
+All other scalar fields (integer, enumeration, real, string)
+.RS 4
+8\-bit\&.
+.RE
+.sp
+The component writes fields using the machine\(cqs native byte order\&. As of this version, there\(cqs no way to force a custom byte order\&.
+.SS "Output path"
+.sp
+The path of a CTF trace is the directory which directly contains the metadata and data stream files\&.
+.sp
+The current strategy to build a path in which to write the streams of a given input trace is, in this order:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+If the
+\fBassume-single-trace\fR
+parameter is true, then the output trace path to use for the single input trace is the directory specified by the
+\fBpath\fR
+parameter\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+If the component recognizes the input trace as an LTTng (2\&.11 or greater) trace, then it checks specific trace environment values to build a trace path relative to the directory specified by the
+\fBpath\fR
+parameter:
+.PP
+Linux kernel domain
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIHOST\fR/\fISNAME\fR\-\fISTIME\fR/kernel
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+User space domain, per\-UID buffering
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIHOST\fR/\fISNAME\fR\-\fISTIME\fR/ust/uid/\fIUID\fR/\fIARCHW\fR\-bit
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.PP
+User space domain, per\-PID buffering
+.RS 4
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIHOST\fR/\fISNAME\fR\-\fISTIME\fR/ust/pid/\fIPNAME\fR\-\fIPID\fR\-\fIPTIME\fR
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+.sp
+With:
+.PP
+\fIHOST\fR
+.RS 4
+Target\(cqs hostname\&.
+.RE
+.PP
+\fISNAME\fR
+.RS 4
+Tracing session name\&.
+.RE
+.PP
+\fISTIME\fR
+.RS 4
+Tracing session creation date/time\&.
+.RE
+.PP
+\fIUID\fR
+.RS 4
+User ID\&.
+.RE
+.PP
+\fIARCHW\fR
+.RS 4
+Architecture\(cqs width (\fB32\fR
+or
+\fB64\fR)\&.
+.RE
+.PP
+\fIPNAME\fR
+.RS 4
+Process name\&.
+.RE
+.PP
+\fIPID\fR
+.RS 4
+Process ID\&.
+.RE
+.PP
+\fIPTIME\fR
+.RS 4
+Process\(cqs date/time\&.
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+If the input trace has a name, then the component sanitizes this name and uses it as a relative path to the directory specified by the
+\fBpath\fR
+parameter\&.
+.sp
+The trace name sanitization operation:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Replaces
+\fB.\fR
+subdirectories with
+\fB_\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Replaces
+\fB..\fR
+subdirectories with
+\fB__\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Removes any trailing
+\fB/\fR
+character\&.
+.RE
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+The component uses the subdirectory
+\fBtrace\fR
+relative to the directory specified by the
+\fBpath\fR
+parameter\&.
+.RE
+.sp
+In all the cases above, if the effective output trace path already exists on the file system, the component appends a numeric suffix to the name of the last subdirectory\&. The suffix starts at 0 and increments until the path does not exist\&.
+.SH "INITIALIZATION PARAMETERS"
+.PP
+\fBassume-single-trace\fR=\fByes\fR [optional boolean]
+.RS 4
+Assume that the component only receives messages related to a single input trace\&.
+.sp
+This parameter affects how the component builds the output trace path (see
+\(lqOutput path\(rq)\&.
+.RE
+.PP
+\fBignore-discarded-events\fR=\fByes\fR [optional boolean]
+.RS 4
+Ignore discarded events messages\&.
+.RE
+.PP
+\fBignore-discarded-packets\fR=\fByes\fR [optional boolean]
+.RS 4
+Ignore discarded packets messages\&.
+.RE
+.PP
+\fBpath\fR=\fIPATH\fR [string]
+.RS 4
+Base output path\&.
+.sp
+See
+\(lqOutput path\(rq
+to learn how the component uses this parameter to build the output path for a given input trace\&.
+.RE
+.PP
+\fBquiet\fR=\fByes\fR [optional boolean]
+.RS 4
+Do not write anything to the standard output\&.
+.RE
+.SH "PORTS"
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| sink\&.ctf\&.fs |
+|             |
+@ in          |
++\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SS "Input"
+.PP
+\fBin\fR
+.RS 4
+Single input port\&.
+.RE
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This component class is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2-plugin-ctf\fR(7)

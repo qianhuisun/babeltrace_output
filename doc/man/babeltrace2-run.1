@@ -1,0 +1,1262 @@
+'\" t
+.\"     Title: babeltrace2-run
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.79.1 <http://docbook.sf.net/>
+.\"      Date: 14 September 2019
+.\"    Manual: Babeltrace\ \&2 manual
+.\"    Source: Babeltrace 2.0.0
+.\"  Language: English
+.\"
+.TH "BABELTRACE2\-RUN" "1" "14 September 2019" "Babeltrace 2\&.0\&.0" "Babeltrace\ \&2 manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+babeltrace2-run \- Create a Babeltrace 2 trace processing graph and run it
+.SH "SYNOPSIS"
+.sp
+.nf
+\fBbabeltrace2\fR [\fIGENERAL OPTIONS\fR] \fBrun\fR [\fB--retry-duration\fR=\fITIME\-US\fR]
+            \fB--connect\fR=\fICONN\-RULE\fR\&... \fICOMPONENTS\fR
+.fi
+.SH "DESCRIPTION"
+.sp
+The \fBrun\fR command creates a Babeltrace\ \&2 trace processing graph and runs it\&.
+.sp
+See \fBbabeltrace2-intro\fR(7) to learn more about the Babeltrace\ \&2 project and its core concepts\&.
+.sp
+The \fBrun\fR command dynamically loads Babeltrace\ \&2 plugins which supply component classes\&. With the \fBrun\fR command, you specify which component classes to instantiate as components and how to connect them\&.
+.sp
+The steps to write a \fBbabeltrace2 run\fR command line are:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+Specify which component classes to instantiate as components with many
+\fB--component\fR
+options and how to configure them\&.
+.sp
+This is the
+\fICOMPONENTS\fR
+part of the
+synopsis\&. See
+\(lqCreate components\(rq
+to learn more\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+Specify how to connect components together with one or more
+\fB--connect\fR
+options\&.
+.sp
+See
+\(lqConnect components\(rq
+to learn more\&.
+.RE
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.sp
+The \fBbabeltrace2-convert\fR(1) command is a specialization of the \fBrun\fR command for the very common case of converting one or more traces: it generates a \fBrun\fR command line and executes it\&. You can use its \fB--run-args\fR or \fB--run-args-0\fR option to make it print the equivalent \fBrun\fR command line instead\&.
+.sp .5v
+.RE
+.SS "Create components"
+.sp
+To create a component, use the \fB--component\fR option\&. This option specifies:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The name of the component, unique amongst all the component names of the trace processing graph\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The type of the component class to instantiate: source, filter, or sink\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The name of the plugin in which to find the component class to instantiate\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+The name of the component class to instantiate\&.
+.RE
+.sp
+Use the \fB--component\fR option multiple times to create multiple components\&. You can instantiate the same component class multiple times as different components\&.
+.sp
+At any point in the command line, the \fB--base-params\fR sets the current base initialization parameters and the \fB--reset-base-params\fR resets them\&. When you specify a \fB--component\fR option, its initial initialization parameters are a copy of the current base initialization parameters\&.
+.sp
+Immediately following a \fB--component\fR option on the command line, the created component is known as the \fIcurrent component\fR (until the next \fB--component\fR option)\&.
+.sp
+The \fB--params\fR=\fIPARAMS\fR option adds parameters to the current component\(cqs initialization parameters\&. If \fIPARAMS\fR contains a key which exists in the current component\(cqs initialization parameters, this parameter is replaced\&.
+.SS "Connect components"
+.sp
+The components which you create from component classes with the \fB--component\fR option (see \(lqCreate components\(rq) add input and output \fIports\fR depending on their type\&. An output port is from where messages, like trace events, are sent\&. An input port is where messages are received\&. For a given component, each port has a unique name\&.
+.sp
+The purpose of the \fBrun\fR command is to create a trace processing graph, that is, to know which component ports to connect together\&. The command achieves this with the help of the connection rules that you provide with one or more \fB--connect\fR=\fICONN\-RULE\fR options\&.
+.sp
+The format of \fICONN\-RULE\fR is:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIUP\-COMP\-PAT\fR[\&.\fIUP\-PORT\-PAT\fR]:\fIDOWN\-COMP\-PAT\fR[\&.\fIDOWN\-PORT\-PAT\fR]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIUP\-COMP\-PAT\fR
+.RS 4
+Upstream component name pattern\&.
+.RE
+.PP
+\fIUP\-PORT\-PAT\fR
+.RS 4
+Upstream (output) port name pattern\&.
+.RE
+.PP
+\fIDOWN\-COMP\-PAT\fR
+.RS 4
+Downstream component name pattern\&.
+.RE
+.PP
+\fIDOWN\-PORT\-PAT\fR
+.RS 4
+Downstream (input) port name pattern\&.
+.RE
+.sp
+When a source or filter component adds a new output port within the processing graph, the \fBrun\fR command does the following to find an input port to connect it to:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+For each connection rule (\-\-connect options, in order):
+  If the output port\*(Aqs component\*(Aqs name matches UP\-COMP\-PAT and the
+  output port\*(Aqs name matches UP\-PORT\-PAT:
+    For each component COMP in the trace processing graph:
+      If the name of COMP matches DOWN\-COMP\-PAT:
+        Select the first input port of COMP of which the name matches
+        DOWN\-PORT\-PAT, or fail with no match\&.
+
+No possible connection: fail with no match\&.
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+\fIUP\-COMP\-PAT\fR, \fIUP\-PORT\-PAT\fR, \fIDOWN\-COMP\-PAT\fR, and \fIDOWN\-PORT\-PAT\fR are globbing patterns where only the wildcard character, \fB*\fR, is special: it matches zero or more characters\&. You must escape the \fB*\fR, \fB?\fR, \fB[\fR, \fB.\fR, \fB:\fR, and \fB\e\fR characters with \fB\e\fR\&.
+.sp
+When you do not specify \fIUP\-PORT\-PAT\fR or \fIDOWN\-PORT\-PAT\fR, they are equivalent to \fB*\fR\&.
+.sp
+You can leverage this connection mechanism to specify fallbacks with a careful use of wildcards, as the order of the \fB--connect\fR options on the command line is significant\&. For example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-connect=\*(AqA\&.out*:B\&.in*\*(Aq \-\-connect=A:B \-\-connect=\*(Aq*:C\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+With those connection rules, the \fBrun\fR command connects:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Any output port of which the name starts with
+\fBout\fR
+of component
+\fBA\fR
+to the first input port of which the name starts with
+\fBin\fR
+of component
+\fBB\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Any other output port of component
+\fBA\fR
+to the first available input port of component
+\fBB\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Any other output port (of any component except
+\fBA\fR) to the first available input port of component
+\fBC\fR\&.
+.RE
+.sp
+The \fBrun\fR command fails when it cannot find an input port to which to connect a given output port using the provided connection rules\&.
+.sp
+See \(lqEXAMPLES\(rq for more examples\&.
+.SH "OPTIONS"
+.SS "General"
+.sp
+You can use those options before the command name\&.
+.sp
+See \fBbabeltrace2\fR(1) for more details\&.
+.PP
+\fB-d\fR, \fB--debug\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBTRACE\fR\&.
+.RE
+.PP
+\fB-l\fR \fILVL\fR, \fB--log-level\fR=\fILVL\fR
+.RS 4
+Set the log level of all known Babeltrace\ \&2 loggers to
+\fILVL\fR\&.
+.RE
+.PP
+\fB--omit-home-plugin-path\fR
+.RS 4
+Do not search for plugins in
+\fB$HOME/.local/lib/babeltrace2/plugins\fR\&.
+.RE
+.PP
+\fB--omit-system-plugin-path\fR
+.RS 4
+Do not search for plugins in
+\fB/usr/local/lib/babeltrace2/plugins\fR\&.
+.RE
+.PP
+\fB--plugin-path\fR=\fIPATH\fR[:\fIPATH\fR]\&...
+.RS 4
+Add
+\fIPATH\fR
+to the list of paths in which plugins can be found\&.
+.RE
+.PP
+\fB-v\fR, \fB--verbose\fR
+.RS 4
+Legacy option: this is equivalent to
+\fB--log-level\fR=\fBINFO\fR\&.
+.RE
+.SS "Component creation"
+.sp
+See \(lqCreate components\(rq for more details\&.
+.PP
+\fB-b\fR \fIPARAMS\fR, \fB--base-params\fR=\fIPARAMS\fR
+.RS 4
+Set the current base parameters to
+\fIPARAMS\fR\&.
+.sp
+You can reset the current base parameters with the
+\fB--reset-base-params\fR
+option\&.
+.sp
+See the
+\fB--params\fR
+option for the format of
+\fIPARAMS\fR\&.
+.RE
+.PP
+\fB-c\fR \fINAME\fR:\fICOMP\-CLS\-TYPE\fR\&.\fIPLUGIN\-NAME\fR\&.\fICOMP\-CLS\-NAME\fR, \fB--component\fR=\fINAME\fR:\fICOMP\-CLS\-TYPE\fR\&.\fIPLUGIN\-NAME\fR\&.\fICOMP\-CLS\-NAME\fR
+.RS 4
+Create a component named
+\fINAME\fR
+from the component class of type
+\fICOMP\-CLS\-TYPE\fR
+named
+\fICOMP\-CLS\-NAME\fR
+found in the plugin named
+\fIPLUGIN\-NAME\fR, and set it as the current component\&.
+.sp
+The available values for
+\fITYPE\fR
+are:
+.PP
+\fBsource\fR, \fBsrc\fR
+.RS 4
+Source component class\&.
+.RE
+.PP
+\fBfilter\fR, \fBflt\fR
+.RS 4
+Filter component class\&.
+.RE
+.PP
+\fBsink\fR
+.RS 4
+Sink component class\&.
+.RE
+.sp
+The initial initialization parameters of this component are copied from the current base initialization parameters (see the
+\fB--base-params\fR
+option)\&.
+.RE
+.PP
+\fB-l\fR \fILVL\fR, \fB--log-level\fR=\fILVL\fR
+.RS 4
+Set the log level of the current component to
+\fILVL\fR\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fB-p\fR \fIPARAMS\fR, \fB--params\fR=\fIPARAMS\fR
+.RS 4
+Add
+\fIPARAMS\fR
+to the initialization parameters of the current component\&.
+.sp
+If
+\fIPARAMS\fR
+contains a key which exists in the current component\(cqs initialization parameters, replace the parameter\&.
+.sp
+The format of
+\fIPARAMS\fR
+is a comma\-separated list of
+\fINAME\fR=\fIVALUE\fR
+assignments:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fINAME\fR=\fIVALUE\fR[,\fINAME\fR=\fIVALUE\fR]\&...
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fINAME\fR
+.RS 4
+Parameter name (C\ \&identifier plus the
+\fB:\fR,
+\fB.\fR, and
+\fB-\fR
+characters)\&.
+.RE
+.PP
+\fIVALUE\fR
+.RS 4
+One of:
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBnull\fR,
+\fBnul\fR,
+\fBNULL\fR: null value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBtrue\fR,
+\fBTRUE\fR,
+\fByes\fR,
+\fBYES\fR: true boolean value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+\fBfalse\fR,
+\fBFALSE\fR,
+\fBno\fR,
+\fBNO\fR: false boolean value\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Binary (\fB0b\fR
+prefix), octal (\fB0\fR
+prefix), decimal, or hexadecimal (\fB0x\fR
+prefix) unsigned (with
+\fB+\fR
+prefix) or signed 64\-bit integer\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Double precision floating point number (scientific notation is accepted)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Unquoted string with no special characters, and not matching any of the null and boolean value symbols above\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Double\-quoted string (accepts escape characters)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Array, formatted as an opening
+\fB[\fR, a comma\-separated list of
+\fIVALUE\fR, and a closing
+\fB]\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Map, formatted as an opening
+\fB{\fR, a comma\-separated list of
+\fINAME\fR=\fIVALUE\fR
+assignments, and a closing
+\fB}\fR\&.
+.RE
+.sp
+You may put whitespaces around the individual
+\fB=\fR
+(assignment),
+\fB,\fR
+(separator),
+\fB[\fR
+(array beginning),
+\fB]\fR
+(array end),
+\fB{\fR
+(map beginning), and
+\fB}\fR
+(map end) characters\&.
+.RE
+.sp
+Example:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\-\-params=\*(Aqmany=null, fresh=yes, condition=false, squirrel=\-782329,
+          play=+23, observe=3\&.14, simple=beef,
+          needs\-quotes="some string",
+          escape\&.chars\-are:allowed="a \e" quote",
+          things=[1, "hello", 2\&.71828],
+          frog={slow=2, bath=[bike, 23], blind=NO}\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBImportant\fR
+.ps -1
+.br
+Like in the example above, make sure to single\-quote the whole argument when you run this command from a shell, as it can contain many special characters\&.
+.sp .5v
+.RE
+.RE
+.PP
+\fB-r\fR, \fB--reset-base-params\fR
+.RS 4
+Reset the current base parameters\&.
+.sp
+You can set the current base parameters with the
+\fB--base-params\fR
+option\&.
+.RE
+.SS "Component connection"
+.PP
+\fB-x\fR \fICONN\-RULE\fR, \fB--connect\fR=\fICONN\-RULE\fR
+.RS 4
+Add the connection rule
+\fICONN\-RULE\fR\&.
+.sp
+The format of
+\fICONN\-RULE\fR
+is:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+\fIUP\-COMP\-PAT\fR[\&.\fIUP\-PORT\-PAT\fR]:\fIDOWN\-COMP\-PAT\fR[\&.\fIDOWN\-PORT\-PAT\fR]
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fIUP\-COMP\-PAT\fR
+.RS 4
+Upstream component name pattern\&.
+.RE
+.PP
+\fIUP\-PORT\-PAT\fR
+.RS 4
+Upstream (output) port name pattern\&.
+.RE
+.PP
+\fIDOWN\-COMP\-PAT\fR
+.RS 4
+Downstream component name pattern\&.
+.RE
+.PP
+\fIDOWN\-PORT\-PAT\fR
+.RS 4
+Downstream (input) port name pattern\&.
+.RE
+.sp
+See
+\(lqConnect components\(rq
+to learn more\&.
+.RE
+.SS "Graph configuration"
+.PP
+\fB--retry-duration\fR=\fITIME\-US\fR
+.RS 4
+Set the duration of a single retry to
+\fITIME\-US\fR\ \&\(mcs when a sink component reports "try again later" (busy network or file system, for example)\&.
+.sp
+Default: 100000 (100\ \&ms)\&.
+.RE
+.SS "Command information"
+.PP
+\fB-h\fR, \fB--help\fR
+.RS 4
+Show the command\(cqs help and quit\&.
+.RE
+.SH "EXAMPLES"
+.PP
+\fBExample\ \&1.\ \&Create a single\-port source component and a single\-port sink component and connect them\&.\fR
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 run \-\-component=A:src\&.plug\&.my\-src \e
+                  \-\-component=B:sink\&.plug\&.my\-sink \e
+                  \-\-connect=A:B
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Possible resulting graph:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| src\&.plug\&.my\-src |    | sink\&.plug\&.my\-sink |
+|       [A]       |    |         [B]       |
+|                 |    |                   |
+|             out @\-\-\->@ in                |
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&2.\ \&Use the \-\-params option to set the current component\(cqs initialization parameters\&.\fR
+.sp
+In this example, the \fB--params\fR option only applies to component \fBthe-source\fR\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 run \-\-component=the\-source:src\&.my\-plugin\&.my\-src \e
+                  \-\-params=offset=123,flag=true \e
+                  \-\-component=the\-sink:sink\&.my\-plugin\&.my\-sink \e
+                  \-\-connect=the\-source:the\-sink
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&3.\ \&Use the \-\-base\-params and \-\-reset\-base\-params options to set and reset the current base initialization parameters\&.\fR
+.sp
+In this example, the effective initialization parameters of the created components are:
+.PP
+Component \fBA\fR
+.RS 4
+\fBoffset=1203, flag=false\fR
+.RE
+.PP
+Component \fBB\fR
+.RS 4
+\fBoffset=1203, flag=true, type=event\fR
+.RE
+.PP
+Component \fBC\fR
+.RS 4
+\fBratio=0.25\fR
+.RE
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 run \-\-base\-params=offset=1203,flag=false \e
+                  \-\-component=A:src\&.plugin\&.compcls \e
+                  \-\-component=B:flt\&.plugin\&.compcls \e
+                  \-\-params=flag=true,type=event \e
+                  \-\-reset\-base\-params \e
+                  \-\-component=C:sink\&.plugin\&.compcls \e
+                  \-\-params=ratio=0\&.25 \e
+                  \-\-connect=A:B \-\-connect=B:C
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+\fBExample\ \&4.\ \&Specify a component connection fallback rule\&.\fR
+.sp
+In this example, any \fBA\fR output port of which the name starts with \fBfoo\fR is connected to a \fBB\fR input port of which the name starts with \fBnin\fR\&. Any other \fBA\fR output port is connected to a \fBB\fR input port of which the name starts with \fBoth\fR\&.
+.sp
+The order of the \fB--connect\fR options is important here: the opposite order would create a system in which the first rule is always satisfied, and \fIany\fR \fBA\fR output port, whatever its name, would be connected to a \fBB\fR input port with a name that starts with \fBoth\fR\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ babeltrace2 run \-\-component=A:src\&.plug\&.my\-src \e
+                  \-\-component=B:sink\&.plug\&.my\-sink \e
+                  \-\-connect=\*(AqA\&.foo*:B:nin*\*(Aq \-\-connect=\*(AqA:B\&.oth*\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Possible resulting graph:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+| src\&.plug\&.my\-src |    | sink\&.plug\&.my\-sink |
+|       [A]       |    |        [B]        |
+|                 |    |                   |
+|            foot @\-\-\->@ nine              |
+|         foodies @\-\-\->@ ninja             |
+|       some\-port @\-\-\->@ othello           |
+|           hello @\-\-\->@ other             |
++\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+    +\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-+
+.fi
+.if n \{\
+.RE
+.\}
+.SH "ENVIRONMENT VARIABLES"
+.SS "Babeltrace\ \&2 library"
+.PP
+\fBBABELTRACE_EXEC_ON_ABORT\fR=\fICMDLINE\fR
+.RS 4
+Execute the command line
+\fICMDLINE\fR, as parsed like a UNIX\ \&98 shell, when any part of the Babeltrace\ \&2 project unexpectedly aborts\&.
+.sp
+The application only aborts when the executed command returns, ignoring its exit status\&.
+.sp
+This environment variable is ignored when the application has the
+\fBsetuid\fR
+or the
+\fBsetgid\fR
+access right flag set\&.
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR\fR=(\fBAUTO\fR | \fBNEVER\fR | \fBALWAYS\fR)
+.RS 4
+Force the terminal color support for the
+\fBbabeltrace2\fR(1)
+program and the project\(cqs plugins\&.
+.sp
+The available values are:
+.PP
+\fBAUTO\fR
+.RS 4
+Only emit terminal color codes when the standard output and error streams are connected to a color\-capable terminal\&.
+.RE
+.PP
+\fBNEVER\fR
+.RS 4
+Never emit terminal color codes\&.
+.RE
+.PP
+\fBALWAYS\fR
+.RS 4
+Always emit terminal color codes\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_TERM_COLOR_BRIGHT_MEANS_BOLD\fR=\fB0\fR
+.RS 4
+Set to
+\fB0\fR
+to emit
+SGR (see <https://en.wikipedia.org/wiki/ANSI_escape_code>)
+codes 90 to 97 for bright colors instead of bold (SGR code\ \&1) and standard color codes (SGR codes 30 to 37)\&.
+.RE
+.PP
+\fBBABELTRACE_PLUGIN_PATH\fR=\fIPATHS\fR
+.RS 4
+Set the list of directories, in order, in which dynamic plugins can be found before other directories are considered to
+\fIPATHS\fR
+(colon\-separated, or semicolon on Windows)\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_DISABLE_PYTHON_PLUGINS\fR=\fB1\fR
+.RS 4
+Disable the loading of any Babeltrace\ \&2 Python plugin\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_INIT_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force the Babeltrace\ \&2 library\(cqs initial log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the Babeltrace\ \&2 library logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fBLIBBABELTRACE2_NO_DLCLOSE\fR=\fB1\fR
+.RS 4
+Make the Babeltrace\ \&2 library leave any dynamically loaded modules (plugins and plugin providers) open at exit\&. This can be useful for debugging purposes\&.
+.RE
+.PP
+\fBLIBBABELTRACE2_PLUGIN_PROVIDER_DIR\fR=\fIDIR\fR
+.RS 4
+Set the directory from which the Babeltrace\ \&2 library dynamically loads plugin provider shared objects to
+\fIDIR\fR\&.
+.sp
+If this environment variable is set, it overrides the default plugin provider directory\&.
+.RE
+.SS "Babeltrace\ \&2 Python bindings"
+.PP
+\fBBABELTRACE_PYTHON_BT2_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force the Babeltrace\ \&2 Python bindings log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the Python bindings logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.SS "CLI"
+.PP
+\fBBABELTRACE_CLI_LOG_LEVEL\fR=\fILVL\fR
+.RS 4
+Force
+\fBbabeltrace2\fR
+CLI\(cqs log level to be
+\fILVL\fR\&.
+.sp
+If this environment variable is set, it overrides the log level set by the
+\fB--log-level\fR
+option for the CLI logger\&.
+.sp
+The available values for
+\fILVL\fR
+are:
+.PP
+\fBNONE\fR, \fBN\fR
+.RS 4
+Logging is disabled\&.
+.RE
+.PP
+\fBFATAL\fR, \fBF\fR
+.RS 4
+Severe errors that lead the execution to abort immediately\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBERROR\fR, \fBE\fR
+.RS 4
+Errors that might still allow the execution to continue\&.
+.sp
+Usually, once one or more errors are reported at this level, the application, plugin, or library won\(cqt perform any more useful task, but it should still exit cleanly\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBWARN\fR, \fBWARNING\fR, \fBW\fR
+.RS 4
+Unexpected situations which still allow the execution to continue\&.
+.sp
+This level should be enabled in production\&.
+.RE
+.PP
+\fBINFO\fR, \fBI\fR
+.RS 4
+Informational messages that highlight progress or important states of the application, plugins, or library\&.
+.sp
+This level can be enabled in production\&.
+.RE
+.PP
+\fBDEBUG\fR, \fBD\fR
+.RS 4
+Debugging information, with a higher level of details than the
+\fBTRACE\fR
+level\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.PP
+\fBTRACE\fR, \fBT\fR
+.RS 4
+Low\-level debugging context information\&.
+.sp
+This level should NOT be enabled in production\&.
+.RE
+.RE
+.PP
+\fBBABELTRACE_CLI_WARN_COMMAND_NAME_DIRECTORY_CLASH\fR=\fB0\fR
+.RS 4
+Disable the warning message which
+\fBbabeltrace2-convert\fR(1)
+prints when you convert a trace with a relative path that\(cqs also the name of a
+\fBbabeltrace2\fR
+command\&.
+.RE
+.PP
+\fBBABELTRACE_DEBUG\fR=\fB1\fR
+.RS 4
+Legacy variable: equivalent to setting the
+\fB--log-level\fR
+option to
+\fBTRACE\fR\&.
+.RE
+.PP
+\fBBABELTRACE_VERBOSE\fR=\fB1\fR
+.RS 4
+Legacy variable: equivalent to setting the
+\fB--log-level\fR
+option to
+\fBINFO\fR\&.
+.RE
+.SH "FILES"
+.PP
+\fB$HOME/.local/lib/babeltrace2/plugins\fR
+.RS 4
+User plugin directory\&.
+.RE
+.PP
+\fB/usr/local/lib/babeltrace2/plugins\fR
+.RS 4
+System plugin directory\&.
+.RE
+.PP
+\fB/usr/local/lib/babeltrace2/plugin-providers\fR
+.RS 4
+System plugin provider directory\&.
+.RE
+.SH "EXIT STATUS"
+.sp
+\fB0\fR on success, \fB1\fR otherwise\&.
+.SH "BUGS"
+.sp
+If you encounter any issue or usability problem, please report it on the Babeltrace bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)\&.
+.SH "RESOURCES"
+.sp
+The Babeltrace project shares some communication channels with the LTTng project (see <https://lttng.org/>)\&.
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Babeltrace website (see <https://babeltrace.org/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Mailing list (see <https://lists.lttng.org>)
+for support and development:
+\fBlttng-dev@lists.lttng.org\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+IRC channel (see <irc://irc.oftc.net/lttng>):
+\fB#lttng\fR
+on
+\fBirc.oftc.net\fR
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Bug tracker (see <https://bugs.lttng.org/projects/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Git repository (see <https://git.efficios.com/?p=babeltrace.git>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+GitHub project (see <https://github.com/efficios/babeltrace>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Continuous integration (see <https://ci.lttng.org/view/Babeltrace/>)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Code review (see <https://review.lttng.org/q/project:babeltrace>)
+.RE
+.SH "AUTHORS"
+.sp
+The Babeltrace\ \&2 project is the result of hard work by many regular developers and occasional contributors\&.
+.sp
+The current project maintainer is J\('er\('emie Galarneau <mailto:jeremie.galarneau@efficios.com>\&.
+.SH "COPYRIGHT"
+.sp
+This command is part of the Babeltrace\ \&2 project\&.
+.sp
+Babeltrace is distributed under the MIT license (see <https://opensource.org/licenses/MIT>)\&.
+.SH "SEE ALSO"
+.sp
+\fBbabeltrace2-intro\fR(7), \fBbabeltrace2\fR(1), \fBbabeltrace2-convert\fR(1)

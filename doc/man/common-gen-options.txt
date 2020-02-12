@@ -1,0 +1,27 @@
+[[gen-opts]]
+=== General
+
+You can use those options before the command name.
+
+See man:babeltrace2(1) for more details.
+
+nlopt:-d::
+nlopt:--debug::
+    Legacy option: this is equivalent to nlopt:--log-level=`TRACE`.
+
+nlopt:-l 'LVL'::
+nlopt:--log-level='LVL'::
+    Set the log level of all known Babeltrace~2 loggers to 'LVL'.
+
+nlopt:--omit-home-plugin-path::
+    Do not search for plugins in `$HOME/.local/lib/babeltrace2/plugins`.
+
+nlopt:--omit-system-plugin-path::
+    Do not search for plugins in +{system_plugin_path}+.
+
+nlopt:--plugin-path='PATH'[:__PATH__]...::
+    Add 'PATH' to the list of paths in which plugins can be found.
+
+nlopt:-v::
+nlopt:--verbose::
+    Legacy option: this is equivalent to nlopt:--log-level=`INFO`.

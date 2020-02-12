@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# Copyright (C) 2015 Julien Desfossez <jdesfossez@efficios.com>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License, version 2 only, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 51
+# Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+SH_TAP=1
+
+if [ "x${BT_TESTS_SRCDIR:-}" != "x" ]; then
+	UTILSSH="$BT_TESTS_SRCDIR/utils/utils.sh"
+else
+	UTILSSH="$(dirname "$0")/../utils/utils.sh"
+fi
+
+# shellcheck source=../utils/utils.sh
+source "$UTILSSH"
+
+NUM_TESTS=10
+
+plan_tests $NUM_TESTS
+
+test_no_lost() {
+	local trace=$1
+
+	"${BT_TESTS_BT2_BIN}" "$trace" >/dev/null 2>&1
+	ok $? "Trace parses"
+	"${BT_TESTS_BT2_BIN}" "$trace" 2>&1 >/dev/null | "${BT_TESTS_GREP_BIN}" "\[warning\] Tracer lost"
+	if test $? = 0; then
+		fail 1 "Should not find any lost events"
+	else
+		ok 0 "No events lost"
+	fi
+}
+
+test_lost() {
+	local trace=$1
+	local expectedcountstr=$2
+
+	"${BT_TESTS_BT2_BIN}" "$trace" >/dev/null 2>&1
+	ok $? "Trace parses"
+
+	# Convert warnings like:
+	# WARNING: Tracer discarded 2 trace packets between ....
+	# WARNING: Tracer discarded 3 trace packets between ....
+	# into "2,3" and make sure it matches the expected result
+	"${BT_TESTS_BT2_BIN}" "$trace" 2>&1 >/dev/null | "${BT_TESTS_GREP_BIN}" "WARNING: Tracer discarded" \
+		| cut -d" " -f4 | tr "\n" "," | "${BT_TESTS_SED_BIN}" "s/.$//" | \
+		"${BT_TESTS_GREP_BIN}" "$expectedcountstr" >/dev/null
+	ok $? "Lost events string matches $expectedcountstr"
+
+}
+
+diag "Test the packet_seq_num validation"
+
+diag "No packet lost"
+test_no_lost "${BT_CTF_TRACES_PATH}/packet_seq_num/no_lost"
+
+diag "No packet lost, packet_seq_num not starting at 0"
+test_no_lost "${BT_CTF_TRACES_PATH}/packet_seq_num/no_lost_not_starting_at_0"
+
+diag "1 stream, 2 packets lost before the last packet"
+test_lost "${BT_CTF_TRACES_PATH}/packet_seq_num/2_lost_before_last" "2"
+
+diag "2 streams, packets lost in one of them"
+test_lost "${BT_CTF_TRACES_PATH}/packet_seq_num/2_streams_lost_in_1" "2"
+
+diag "2 streams, packets lost in both"
+test_lost "${BT_CTF_TRACES_PATH}/packet_seq_num/2_streams_lost_in_2" "2,3,1"

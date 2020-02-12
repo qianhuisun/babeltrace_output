@@ -1,0 +1,33 @@
+`BABELTRACE_EXEC_ON_ABORT`='CMDLINE'::
+    Execute the command line 'CMDLINE', as parsed like a UNIX~98 shell,
+    when any part of the Babeltrace~2 project unexpectedly aborts.
++
+The application only aborts when the executed command returns, ignoring
+its exit status.
++
+This environment variable is ignored when the application has the
+`setuid` or the `setgid` access right flag set.
+
+`BABELTRACE_TERM_COLOR`=(`AUTO` | `NEVER` | `ALWAYS`)::
+    Force the terminal color support for the man:babeltrace2(1) program
+    and the project's plugins.
++
+The available values are:
++
+--
+`AUTO`::
+    Only emit terminal color codes when the standard output and error
+    streams are connected to a color-capable terminal.
+
+`NEVER`::
+    Never emit terminal color codes.
+
+`ALWAYS`::
+    Always emit terminal color codes.
+--
+
+`BABELTRACE_TERM_COLOR_BRIGHT_MEANS_BOLD`=`0`::
+    Set to `0` to emit
+    https://en.wikipedia.org/wiki/ANSI_escape_code[SGR]
+    codes 90 to 97 for bright colors instead of
+    bold (SGR code~1) and standard color codes (SGR codes 30 to 37).
