@@ -34,6 +34,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include "pretty.h"
+// Qianhui: 02/10/2020 Begin
+// Edit: here is where to print event object
+#include <stdio.h>
+uint64_t event_index = 0;
+// Qianhui: 02/10/2020 End
 
 #define NSEC_PER_SEC 1000000000LL
 
@@ -1195,6 +1200,12 @@ BT_HIDDEN
 int pretty_print_event(struct pretty_component *pretty,
 		const bt_message *event_msg)
 {
+	// Qianhui: 02/10/2020 Begin
+	// Edit: here is where to print event object
+	event_index++;
+	printf("event #%" PRIu64 ": %s", event_index);
+	// Qianhui: 02/10/2020 End
+
 	int ret;
 	const bt_event *event =
 		bt_message_event_borrow_event_const(event_msg);
